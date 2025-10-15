@@ -15,7 +15,7 @@ const AuthProvider = ({ children }) => {
     });
 
     const { data: listener } = client.auth.onAuthStateChange((e, session) => {
-      setUser(session.user || null);
+      setUser(session?.user || null);
     });
 
     return () => {
