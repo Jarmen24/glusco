@@ -11,13 +11,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import client from "@/app/api/client";
+import GoogleLoginButton from "./GoogleAuth";
 
 const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
-    const email = e.target[0]?.value;
-    const password = e.target[1]?.value;
-    console.log(email, password);
+    const formData = new FormData(e.target);
+    const email = formData.get("email");
+    const password = formData.get("password");
 
     if (!email || !password) {
       toast.error("Email and password are required");
@@ -56,9 +57,10 @@ const Signup = () => {
               <Label>Password</Label>
               <Input id="password" type="password" placeholder="" />
             </div>
-            <Button type="submit" className="w-full">
+            <Button type="submit" className="w-full cursor-pointer">
               Sign Up
             </Button>
+            <GoogleLoginButton />
           </div>
         </form>
       </CardContent>

@@ -7,10 +7,10 @@ const Auth = () => {
   return (
     <Tabs defaultValue="login" className="w-[400px] mt-[150px]">
       <TabsList className="grid w-full grid-cols-2">
-        <TabsTrigger value="login" className="">
+        <TabsTrigger value="login" className="cursor-pointer">
           Login
         </TabsTrigger>
-        <TabsTrigger value="signup" className="">
+        <TabsTrigger value="signup" className="cursor-pointer">
           Signup
         </TabsTrigger>
       </TabsList>

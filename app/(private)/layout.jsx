@@ -15,7 +15,7 @@ const PrivatePagesLayout = ({ children }) => {
     }
   }, [user, loading]);
 
-  if (loading || !user) return null;
+  if (loading || !user) return;
 
   return <div>{children}</div>;
 };
