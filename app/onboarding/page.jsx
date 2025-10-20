@@ -17,7 +17,7 @@ export default function Home() {
   }, [user, loading]);
 
   return (
-    <div className="flex items-center justify-center px-5">
+    <div className="flex items-center justify-center h-screen px-5">
       {loading ? <h1>Loading..</h1> : <Auth />}
     </div>
   );

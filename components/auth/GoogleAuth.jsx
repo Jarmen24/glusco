@@ -20,7 +20,7 @@ export default function GoogleLoginButton() {
   };
 
   return (
-    <Button onClick={handleGoogleLogin} className="w-full cursor-pointer">
+    <Button onClick={handleGoogleLogin} className="w-full cursor-pointer mt-3">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         x="0px"

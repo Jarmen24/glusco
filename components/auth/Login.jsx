@@ -66,9 +66,9 @@ const Login = () => {
             <Button type="submit" className="w-full cursor-pointer">
               Login
             </Button>
-            <GoogleLoginButton />
           </div>
         </form>
+        <GoogleLoginButton />
       </CardContent>
     </Card>
   );

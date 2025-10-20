@@ -4,6 +4,7 @@ import useAuth from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Auth from "@/components/auth/Auth";
+import { SyncLoader } from "react-spinners";
 
 export default function Home() {
   const { user, loading } = useAuth();
@@ -11,14 +12,14 @@ export default function Home() {
 
   useEffect(() => {
     if (!loading && user) {
-      router.push("/multi-step-form");
+      router.push("/dashboard");
       return;
     }
   }, [user, loading]);
 
   return (
-    <div className="flex items-center justify-center px-5">
-      {loading ? <h1>Loading..</h1> : <Auth />}
+    <div className="flex items-center justify-center h-screen px-5">
+      {loading ? <SyncLoader color="#0B1956" /> : <h1>WELCOME TO GLUSCO!</h1>}
     </div>
   );
 }

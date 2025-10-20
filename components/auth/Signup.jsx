@@ -60,9 +60,9 @@ const Signup = () => {
             <Button type="submit" className="w-full cursor-pointer">
               Sign Up
             </Button>
-            <GoogleLoginButton />
           </div>
         </form>
+        <GoogleLoginButton />
       </CardContent>
     </Card>
   );
