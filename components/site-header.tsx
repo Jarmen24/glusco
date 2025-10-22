@@ -24,7 +24,7 @@ export function SiteHeader({ title }: SiteHeaderProps) {
               target="_blank"
               className="dark:text-foreground"
             >
-              GitHub
+              Glusco
             </a>
           </Button>
         </div>
