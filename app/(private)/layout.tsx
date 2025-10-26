@@ -43,7 +43,7 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" />
+      <AppSidebar variant="inset" user={user} />
       {children}
     </SidebarProvider>
   );

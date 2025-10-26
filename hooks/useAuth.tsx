@@ -1,9 +1,10 @@
 import { useContext } from "react";
 import { AuthContext } from "@/components/context/AuthProvider";
+import { User } from "@supabase/supabase-js";
 
 // 1️⃣ Define what the AuthContext should contain
 export interface AuthContextType {
-  user: any | null; // Replace `any` with your actual user type, e.g. Supabase's `User`
+  user: User | null; // Replace `any` with your actual user type, e.g. Supabase's `User`
   loading: boolean;
 }
 

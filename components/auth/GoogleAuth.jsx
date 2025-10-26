@@ -3,6 +3,8 @@
 import { Button } from "@/components/ui/button";
 import client from "@/app/api/client";
 import { toast } from "sonner";
+import { useSaveUser } from "@/hooks/useSaveUser";
+import { useEffect, useState } from "react";
 
 export default function GoogleLoginButton() {
   const handleGoogleLogin = async () => {
@@ -13,6 +15,8 @@ export default function GoogleLoginButton() {
       },
     });
 
+    const user = client.auth.getUser();
+    useSaveUser(user, { username: "HazelHehe" });
     if (error) {
       toast.error("Failed to sign in with Google");
       console.error(error);

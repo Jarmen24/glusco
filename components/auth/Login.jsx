@@ -20,18 +20,20 @@ const Login = () => {
     const email = formData.get("email");
     const password = formData.get("password");
 
-    if (!email || !password) {
-      toast.error("Email and password are required");
+    const { data: authData, error: authError } =
+      await client.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (authData) {
+      toast.success("Login successful");
       return;
     }
 
-    const { data, error } = await client.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    if (error) {
-      toast.error("Unable to login. Please try again.");
+    if (authError) {
+      toast.error(authError.message);
+      return;
     }
   };
 

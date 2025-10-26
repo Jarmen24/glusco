@@ -10,11 +10,9 @@ import {
   IconFileWord,
   IconHelp,
   IconInnerShadowTop,
-  IconListDetails,
   IconReport,
   IconSearch,
   IconSettings,
-  IconUsers,
   IconChartBarPopular,
   IconMessages,
   IconApple,
@@ -33,144 +31,104 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import type { User } from "@supabase/supabase-js";
+import client from "@/app/api/client";
 
+interface DBUser {
+  id: string;
+  email: string;
+  username?: string;
+  name?: string;
+  avatar_url?: string;
+}
+
+// Static nav data
 const data = {
-  user: {
-    name: "shadcn",
-    email: "m@example.com",
-    avatar: "/avatars/shadcn.jpg",
-  },
   navMain: [
-    {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
-    },
-    {
-      title: "Insights",
-      url: "/insights",
-      icon: IconChartBarPopular,
-    },
-    {
-      title: "Forum",
-      url: "/forum",
-      icon: IconMessages,
-    },
-    {
-      title: "Better You",
-      url: "betteryou",
-      icon: IconApple,
-    },
-  ],
-  navClouds: [
-    {
-      title: "Capture",
-      icon: IconCamera,
-      isActive: true,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Proposal",
-      icon: IconFileDescription,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
-    {
-      title: "Prompts",
-      icon: IconFileAi,
-      url: "#",
-      items: [
-        {
-          title: "Active Proposals",
-          url: "#",
-        },
-        {
-          title: "Archived",
-          url: "#",
-        },
-      ],
-    },
+    { title: "Dashboard", url: "/dashboard", icon: IconDashboard },
+    { title: "Insights", url: "/insights", icon: IconChartBarPopular },
+    { title: "Forum", url: "/forum", icon: IconMessages },
+    { title: "Better You", url: "/betteryou", icon: IconApple },
   ],
   navSecondary: [
-    {
-      title: "Settings",
-      url: "#",
-      icon: IconSettings,
-    },
-    {
-      title: "Get Help",
-      url: "#",
-      icon: IconHelp,
-    },
-    {
-      title: "Search",
-      url: "#",
-      icon: IconSearch,
-    },
+    { title: "Settings", url: "#", icon: IconSettings },
+    { title: "Get Help", url: "#", icon: IconHelp },
+    { title: "Search", url: "#", icon: IconSearch },
   ],
   documents: [
-    {
-      name: "Data Library",
-      url: "#",
-      icon: IconDatabase,
-    },
-    {
-      name: "Reports",
-      url: "#",
-      icon: IconReport,
-    },
-    {
-      name: "Word Assistant",
-      url: "#",
-      icon: IconFileWord,
-    },
+    { name: "Data Library", url: "#", icon: IconDatabase },
+    { name: "Reports", url: "#", icon: IconReport },
+    { name: "Word Assistant", url: "#", icon: IconFileWord },
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  user?: User | null; // ✅ accept user
+}
+
+export function AppSidebar({ user, variant, ...props }: AppSidebarProps) {
+  const [userData, setUserData] = React.useState<DBUser | null>(null);
+
+  React.useEffect(() => {
+    if (!user) return;
+
+    const fetchUserData = async () => {
+      const { data, error } = await client
+        .from("users")
+        .select("*")
+        .eq("email", user.email)
+        .maybeSingle();
+
+      if (error) {
+        console.error(error.message);
+      }
+
+      if (data) {
+        setUserData(data);
+      }
+    };
+
+    fetchUserData();
+  }, [user]);
   return (
     <Sidebar collapsible="offcanvas" {...props}>
+      {/* HEADER */}
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="data-[slot=sidebar-menu-button]:!p-1.5"
+              className="data-[slot=sidebar-menu-button]:p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <IconInnerShadowTop className="size-5" />
                 <span className="text-base font-semibold">Glusco</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>
+
+      {/* MAIN CONTENT */}
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
         <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
+
+      {/* FOOTER — show user info here */}
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={
+            user
+              ? {
+                  name: userData?.name || "User",
+                  email: userData?.email || "",
+                  avatar: userData?.avatar_url || "/default-avatar.png",
+                }
+              : { name: "Guest", email: "", avatar: "/default-avatar.png" }
+          }
+        />
       </SidebarFooter>
     </Sidebar>
   );
