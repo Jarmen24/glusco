@@ -23,9 +23,32 @@ import { AuthContext } from "@/components/context/AuthProvider";
 
 export default function Page() {
   const user = useContext(AuthContext);
-  console.log(user);
   const [prediction, setPrediction] = useState<string | null>(null);
+  useEffect(() => {
+    const syncUser = async () => {
+      const {
+        data: { user },
+      } = await client.auth.getUser();
+      if (!user) return;
 
+      const { data: existingUser } = await client
+        .from("users")
+        .select("id")
+        .eq("email", user.email)
+        .maybeSingle();
+
+      if (!existingUser) {
+        await useSaveUser(
+          user.user_metadata.email,
+          user.user_metadata.full_name,
+          user.user_metadata.email.split("@")[0],
+          user.user_metadata.avatar_url
+        );
+      }
+    };
+
+    syncUser();
+  }, []);
   useEffect(() => {
     const fetchPrediction = async () => {
       try {

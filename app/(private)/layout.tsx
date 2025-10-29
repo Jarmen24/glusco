@@ -7,6 +7,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SyncLoader } from "react-spinners";
+import { useGetUser } from "@/hooks/userHooks";
 
 interface PrivatePagesLayoutProps {
   children: React.ReactNode;
@@ -17,20 +18,11 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
 }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
-
   useEffect(() => {
     if (!loading && !user) {
       router.push("/"); // redirect to login or homepage
     }
   }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <SyncLoader color="#0B1956" />
-      </div>
-    );
-  }
 
   if (!user) return null;
 

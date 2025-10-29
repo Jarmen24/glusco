@@ -1,4 +1,4 @@
-import React from "react";
+import React, { use } from "react";
 import {
   Card,
   CardContent,
@@ -13,6 +13,14 @@ import { toast } from "sonner";
 import client from "@/app/api/client";
 import GoogleLoginButton from "./GoogleAuth";
 import { useSaveUser } from "@/hooks/useSaveUser";
+
+const profile_images = [
+  "https://gvaujsnaspqbtqusdoio.supabase.co/storage/v1/object/public/avatars/01.png",
+  "https://gvaujsnaspqbtqusdoio.supabase.co/storage/v1/object/public/avatars/02.png",
+  "https://gvaujsnaspqbtqusdoio.supabase.co/storage/v1/object/public/avatars/03.png",
+  "https://gvaujsnaspqbtqusdoio.supabase.co/storage/v1/object/public/avatars/04.png",
+  "https://gvaujsnaspqbtqusdoio.supabase.co/storage/v1/object/public/avatars/05.png",
+];
 
 const Signup = () => {
   const handleSignup = async (e) => {
@@ -80,27 +88,20 @@ const Signup = () => {
         return;
       }
 
-      // ✅ only insert if login succeeded
-      const { data: insertData, error: insertError } = await client
-        .from("users")
-        .upsert(
-          {
-            email,
-            username,
-            name,
-            profile_picture: "sdasdasd",
-          },
-          { onConflict: "email" } // prevents duplicates if user already exists
-        );
+      const save = useSaveUser(
+        email,
+        name,
+        username,
+        profile_images[Math.floor(Math.random() * 5)]
+      );
 
-      if (insertError) {
-        toast.error(insertError.message);
+      if (!save) {
+        toast.error("Failed to sign up");
         return;
-      } else {
-        toast.success("Login Successful");
       }
+      toast.success("Login Successful");
     } catch (error) {
-      toast.error("An unexpected error occurred during signup.");
+      toast.error(error.message);
     }
   };
 

@@ -33,13 +33,16 @@ import {
 } from "@/components/ui/sidebar";
 import type { User } from "@supabase/supabase-js";
 import client from "@/app/api/client";
+import { toast } from "sonner";
+import { useGetUser } from "@/hooks/userHooks";
+import { UserDB } from "./types/UserDB";
 
 interface DBUser {
   id: string;
   email: string;
-  username?: string;
-  name?: string;
-  avatar_url?: string;
+  username: string;
+  name: string;
+  profile_picture: string;
 }
 
 // Static nav data
@@ -64,32 +67,11 @@ const data = {
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   user?: User | null; // ✅ accept user
+  variant: any;
 }
 
 export function AppSidebar({ user, variant, ...props }: AppSidebarProps) {
-  const [userData, setUserData] = React.useState<DBUser | null>(null);
-
-  React.useEffect(() => {
-    if (!user) return;
-
-    const fetchUserData = async () => {
-      const { data, error } = await client
-        .from("users")
-        .select("*")
-        .eq("email", user.email)
-        .maybeSingle();
-
-      if (error) {
-        console.error(error.message);
-      }
-
-      if (data) {
-        setUserData(data);
-      }
-    };
-
-    fetchUserData();
-  }, [user]);
+  const userDB = useGetUser();
   return (
     <Sidebar collapsible="offcanvas" {...props}>
       {/* HEADER */}
@@ -122,9 +104,9 @@ export function AppSidebar({ user, variant, ...props }: AppSidebarProps) {
           user={
             user
               ? {
-                  name: userData?.name || "User",
-                  email: userData?.email || "",
-                  avatar: userData?.avatar_url || "/default-avatar.png",
+                  name: userDB?.name || "User",
+                  email: userDB?.email || "",
+                  avatar: userDB?.profile_picture || "/default-avatar.png",
                 }
               : { name: "Guest", email: "", avatar: "/default-avatar.png" }
           }

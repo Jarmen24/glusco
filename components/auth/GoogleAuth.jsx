@@ -8,6 +8,17 @@ import { useEffect, useState } from "react";
 
 export default function GoogleLoginButton() {
   const handleGoogleLogin = async () => {
+    const { data: userData } = await client.auth.getUser();
+    const user = userData?.user;
+    console.log(user);
+    if (user) {
+      await useSaveUser(
+        user.user_metadata.email,
+        user.user_metadata.full_name,
+        user.user_metadata.email.split("@")[0],
+        user.user_metadata.avatar_url
+      );
+    }
     const { data, error } = await client.auth.signInWithOAuth({
       provider: "google",
       options: {
@@ -15,12 +26,7 @@ export default function GoogleLoginButton() {
       },
     });
 
-    const user = client.auth.getUser();
-    useSaveUser(user, { username: "HazelHehe" });
-    if (error) {
-      toast.error("Failed to sign in with Google");
-      console.error(error);
-    }
+    if (error) return toast.error("Failed to sign in");
   };
 
   return (

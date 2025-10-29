@@ -1,32 +1,31 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import client from "@/app/api/client";
+import { toast } from "sonner";
 
-export function useSaveUser(user?: any, ...props: any) {
-  useEffect(() => {
-    const saveUserToDatabase = async () => {
-      if (!user) return;
+export async function useSaveUser(
+  email: string,
+  name: string,
+  username: string,
+  profile_picture: string
+) {
+  if (!email) return null;
 
-      const { username } = props;
-      const { user_metadata } = user;
+  const { data, error } = await client.from("users").upsert(
+    {
+      email,
+      name,
+      username,
+      profile_picture,
+    },
+    { onConflict: "email" }
+  );
 
-      const { avatar_url, email, full_name } = user_metadata;
+  if (error) {
+    toast.error("Error saving user to database");
+    return null;
+  }
 
-      const { error } = await client.from("users").upsert(
-        {
-          email: email,
-          name: full_name,
-          profile_picture: avatar_url,
-          username: username,
-        },
-        { onConflict: "username" }
-      );
-
-      if (error) console.error("Error saving user:", error);
-      else console.log("✅ User saved to database:");
-    };
-
-    saveUserToDatabase();
-  }, []);
+  return data;
 }
