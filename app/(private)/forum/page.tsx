@@ -40,14 +40,12 @@ import client from "@/app/api/client";
 import { useGetUser } from "@/hooks/userHooks";
 import useAuth from "@/hooks/useAuth";
 import { SyncLoader } from "react-spinners";
+import { Badge } from "@/components/ui/badge";
 
 export default function Page() {
   const { user, loading } = useAuth();
   const userDB = useGetUser();
   const { forums, loading: forumLoading } = getAllForums();
-  if (!forumLoading) {
-    console.log(forums);
-  }
   const [category, setCategory] = useState("");
   const { categories } = getAllCategories();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -89,7 +87,7 @@ export default function Page() {
   return (
     <>
       <SidebarInset>
-        <SiteHeader title="Dashboard" />
+        <SiteHeader title="Forum" />
         <div className="flex flex-1 flex-col">
           <div className="lg:px-5 px-2">
             <div className="lg:p-4 p-3">
@@ -195,14 +193,17 @@ export default function Page() {
                     {forums.map((forum) => (
                       <Link href={`/forum/${forum.id}`} key={forum.id}>
                         <Card className="w-full hover:bg-slate-100 transition ease-in-out duration-300 px-3 py-3 pt-5 gap-2">
-                          <CardHeader className="flex gap-4 items-center relative px-3 lg:px-6 pb-0">
+                          <CardHeader className="flex gap-4 items-start relative px-3 lg:px-6 pb-0">
                             <img
                               src={forum.users.profile_picture}
                               className="rounded-full size-15"
                             />
                             <div className="flex-auto min-w-0">
                               <CardTitle className="mb-2 flex flex-col gap-1 wrap-break-word">
-                                <span className="truncate text-base sm:whitespace-normal sm:wrap-break-word font-semibold">
+                                <Badge className="bg-primary font-semibold lg:text-sm md:text-[12px] text-[10px]">
+                                  {forum.category}
+                                </Badge>
+                                <span className="sm:line-clamp-2 text-base leading-tight sm:whitespace-normal sm:wrap-break-word font-semibold">
                                   {forum.title}
                                 </span>
                                 <span className="text-xs opacity-50">
