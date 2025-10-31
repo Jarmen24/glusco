@@ -16,6 +16,7 @@ import {
   IconChartBarPopular,
   IconMessages,
   IconApple,
+  IconUser,
 } from "@tabler/icons-react";
 
 import { NavDocuments } from "@/components/nav-documents";
@@ -53,13 +54,8 @@ const data = {
     { title: "Forum", url: "/forum", icon: IconMessages },
     { title: "Better You", url: "/betteryou", icon: IconApple },
   ],
-  navSecondary: [
-    { title: "Settings", url: "#", icon: IconSettings },
-    { title: "Get Help", url: "#", icon: IconHelp },
-    { title: "Search", url: "#", icon: IconSearch },
-  ],
   documents: [
-    { name: "Data Library", url: "#", icon: IconDatabase },
+    { name: "View Profile", url: "/profile", icon: IconUser },
     { name: "Reports", url: "#", icon: IconReport },
     { name: "Word Assistant", url: "#", icon: IconFileWord },
   ],
@@ -95,7 +91,6 @@ export function AppSidebar({ user, variant, ...props }: AppSidebarProps) {
       <SidebarContent>
         <NavMain items={data.navMain} />
         <NavDocuments items={data.documents} />
-        <NavSecondary items={data.navSecondary} className="mt-auto" />
       </SidebarContent>
 
       {/* FOOTER — show user info here */}

@@ -24,7 +24,12 @@ import {
 } from "@/components/ui/card";
 import { IconHeart, IconMessageCircle } from "@tabler/icons-react";
 import Link from "next/link";
-import { createPost, getAllCategories, getAllForums } from "@/hooks/forumHooks";
+import {
+  createPost,
+  getAllCategories,
+  getAllForums,
+  useTrendingForums,
+} from "@/hooks/forumHooks";
 import { int, number, string } from "zod";
 import { Label } from "@/components/ui/label";
 import { DialogClose } from "@radix-ui/react-dialog";
@@ -49,7 +54,8 @@ export default function Page() {
   const [category, setCategory] = useState("");
   const { categories } = getAllCategories();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  const { forums: trendingForums, loading: trendingLoading } =
+    useTrendingForums(10);
   const submitPost = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     ///const formData = new FormData(e.target);
@@ -220,19 +226,65 @@ export default function Page() {
                           <CardFooter className="flex justify-end gap-4 px-6 text-sm text-slate-500">
                             <div className="flex items-center">
                               <IconMessageCircle className="mr-1 text-primary size-5" />
-                              <span>{forum.comments ?? 0}</span>
+                              <span>{forum.comments.length ?? 0}</span>
                             </div>
                             <div className="flex items-center">
                               <IconHeart className="mr-1 text-primary size-5" />
-                              <span>{forum.likes ?? 0}</span>
+                              <span>{forum.forum_likes.length ?? 0}</span>
                             </div>
                           </CardFooter>
                         </Card>
                       </Link>
                     ))}
                   </div>
-                  <div className="lg:w-1/3 lg:block hidden">
-                    <Card />
+                  <div className="hidden lg:flex lg:w-1/3 flex-col gap-2">
+                    <div>
+                      <div className="w-full justify-start items-start flex flex-col bg-slate-200 rounded-md lg:p-3 p-3">
+                        <h1 className="font-bold text-primary">
+                          Trending Posts
+                        </h1>
+                      </div>
+                    </div>
+                    {trendingForums.map((forum) => (
+                      <Link href={`/forum/${forum.id}`} key={forum.id}>
+                        <Card className="w-full hover:bg-slate-100 transition ease-in-out duration-300 px-3 py-3 pt-5 gap-2">
+                          <CardHeader className="flex gap-4 items-start relative px-3 lg:px-2 pb-0">
+                            <img
+                              src={forum.users.profile_picture}
+                              className="rounded-full size-15"
+                            />
+                            <div className="flex-auto min-w-0">
+                              <CardTitle className="mb-2 flex flex-col gap-1 wrap-break-word">
+                                <Badge className="bg-primary font-semibold lg:text-sm md:text-[12px] text-[10px]">
+                                  {forum.category}
+                                </Badge>
+                                <span className="sm:line-clamp-2 text-base leading-tight sm:whitespace-normal sm:wrap-break-word font-semibold">
+                                  {forum.title}
+                                </span>
+                                <span className="text-xs opacity-50">
+                                  {forum.users.name}
+                                </span>
+                              </CardTitle>
+                              <CardDescription className="lg:text-sm text-xs text-slate-600 wrap-break-word whitespace-pre-wrap">
+                                <p className="line-clamp-2 wrap-break-word whitespace-pre-wrap">
+                                  {forum.description}
+                                </p>
+                              </CardDescription>
+                            </div>
+                          </CardHeader>
+                          <CardFooter className="flex justify-end gap-4 px-6 text-sm text-slate-500">
+                            <div className="flex items-center">
+                              <IconMessageCircle className="mr-1 text-primary size-5" />
+                              <span>{forum.comments.length ?? 0}</span>
+                            </div>
+                            <div className="flex items-center">
+                              <IconHeart className="mr-1 text-primary size-5" />
+                              <span>{forum.forum_likes.length ?? 0}</span>
+                            </div>
+                          </CardFooter>
+                        </Card>
+                      </Link>
+                    ))}
                   </div>
                 </div>
               ) : (

@@ -8,8 +8,12 @@ import {
 } from "@/components/ui/input-group";
 import TextareaAutosize from "react-textarea-autosize";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { useGetForum, usePostComment } from "@/hooks/forumHooks";
-import { IconHeart, IconMessageCircle } from "@tabler/icons-react";
+import { useGetForum, useLikePost, usePostComment } from "@/hooks/forumHooks";
+import {
+  IconHeart,
+  IconHeartFilled,
+  IconMessageCircle,
+} from "@tabler/icons-react";
 import { useParams } from "next/navigation";
 import React from "react";
 import { Badge } from "@/components/ui/badge";
@@ -18,14 +22,40 @@ import useAuth from "@/hooks/useAuth";
 import { useGetUser } from "@/hooks/userHooks";
 import { SyncLoader } from "react-spinners";
 
+import { Button } from "@/components/ui/button";
+import { set } from "zod";
+
 export default function Page() {
   const { user, loading } = useAuth();
   const params = useParams();
   const id = parseInt(params.id as string);
   const userDB = useGetUser();
   const { forum, loading: forumLoading, refetch } = useGetForum(id);
-
   const { postComment, loading: posting } = usePostComment(); // ✅ use the hook
+  const { toggleLike } = useLikePost();
+  const [like, setLike] = React.useState<boolean | null>(false);
+  React.useEffect(() => {
+    if (forum && userDB) {
+      const hasLiked = forum.forum_likes?.some(
+        (like) => like.user?.toString() === userDB.id?.toString()
+      );
+      setLike(!!hasLiked);
+    }
+  }, [forum, userDB]);
+
+  const handleLike = async () => {
+    if (!userDB || !forum) return;
+
+    const userID = userDB.id; // uuid or bigint, depending on your schema
+    const result = await toggleLike(forum.id, userDB.id);
+    if (!result) {
+      return;
+    }
+    setLike(result.liked);
+    if (result) {
+      await refetch(); // refresh the forum data to update like count & state
+    }
+  };
 
   const submitComment = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -109,8 +139,18 @@ export default function Page() {
                         <span>{forum.comments.length ?? 0}</span>
                       </div>
                       <div className="flex items-center">
-                        <IconHeart className="mr-1 text-primary size-5" />
-                        <span>{forum.likes ?? 0}</span>
+                        <Button
+                          variant="ghost"
+                          onClick={handleLike}
+                          className="cursor-pointer"
+                        >
+                          {like ? (
+                            <IconHeartFilled className="mr-1 text-primary size-5" />
+                          ) : (
+                            <IconHeart className="mr-1 text-primary size-5" />
+                          )}
+                        </Button>
+                        <span>{forum.forum_likes.length ?? 0}</span>
                       </div>
                     </div>
                   </div>

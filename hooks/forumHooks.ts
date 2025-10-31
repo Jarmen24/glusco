@@ -8,16 +8,18 @@ interface Forums {
   title: string;
   description: string;
   likes: number;
-  comments: number;
+  comment_count: number;
   user: number;
   category: string;
   created_at: string;
-  users: {
-    id: number;
-    name: string;
-    username: string;
-    profile_picture: string;
-  };
+  forum_likes: Forum_Likes[];
+  users: User;
+  comments: Comment[];
+}
+
+interface Forum_Likes {
+  id: number;
+  user: number;
 }
 
 interface User {
@@ -36,6 +38,7 @@ interface Forum {
   user: number;
   category: string;
   created_at: string;
+  forum_likes: Forum_Likes[];
   users: User;
   comments: Comment[];
 }
@@ -60,7 +63,15 @@ export function getAllForums() {
     const getAllForums = async () => {
       const { data, error } = await client
         .from("forum")
-        .select("*, users (id, name, username, profile_picture)")
+        .select(
+          `*, users (id, name, username, profile_picture), comments (
+      id,
+      comment,
+      created_at,
+      user (id, name, username, profile_picture)
+    ),
+    forum_likes (id, user)`
+        )
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -79,6 +90,49 @@ export function getAllForums() {
   return { forums, loading, refetch: getAllForums };
 }
 
+export function useTrendingForums(limit = 5) {
+  const [forums, setForums] = useState<Forums[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchTrending = async () => {
+      setLoading(true);
+      // Supabase query: fetch forums + their related likes
+      const { data, error } = await client.from("forum")
+        .select(`*, users (id, name, username, profile_picture), comments (
+      id,
+      comment,
+      created_at,
+      user (id, name, username, profile_picture)
+    ),
+    forum_likes (id, user)`);
+
+      if (error) {
+        toast.error(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data) {
+        // Sort by number of likes (forum_likes.length)
+        const sorted = data
+          .sort(
+            (a, b) =>
+              (b.forum_likes?.length || 0) - (a.forum_likes?.length || 0)
+          )
+          .slice(0, limit); // limit to top N trending
+
+        setForums(sorted);
+        setLoading(false);
+      }
+    };
+
+    fetchTrending();
+  }, [limit]);
+
+  return { forums, loading };
+}
+
 export function useGetForum(id: number) {
   const [forum, setForum] = useState<Forum | null>(null);
   const [loading, setLoading] = useState(true);
@@ -95,7 +149,8 @@ export function useGetForum(id: number) {
       comment,
       created_at,
       user (id, name, username, profile_picture)
-    )
+    ),
+    forum_likes (id, user)
     `
       )
       .eq("id", id)
@@ -195,5 +250,45 @@ export function getAllCategories() {
 
   return { categories };
 }
+export function useLikePost() {
+  const toggleLike = async (forumID: number, userID: string | number) => {
+    try {
+      // Check if user already liked this post
+      const { data: existing } = await client
+        .from("forum_likes")
+        .select("id")
+        .eq("forum", forumID)
+        .eq("user", userID)
+        .maybeSingle();
 
-export function useGetComments() {}
+      if (existing) {
+        // Unlike (delete)
+        await client
+          .from("forum_likes")
+          .delete()
+          .eq("forum", forumID)
+          .eq("user", userID);
+
+        toast.success("Like removed");
+        return { liked: false };
+      } else {
+        // Like (insert)
+        const { error } = await client.from("forum_likes").insert([
+          {
+            forum: forumID,
+            user: userID,
+          },
+        ]);
+
+        if (error) throw error;
+        toast.success("Post liked!");
+        return { liked: true };
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Error liking post");
+      return null;
+    }
+  };
+
+  return { toggleLike };
+}
