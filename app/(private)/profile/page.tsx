@@ -24,7 +24,13 @@ const page = () => {
     const file = fileInput.files?.[0];
 
     if (file) {
-      const url = await handleUpload(file);
+      const uniqueName = `${Date.now()}-${file.name}`;
+      console.log(uniqueName);
+      const renamedFile = new File([file], uniqueName, { type: file.type });
+      console.log(renamedFile);
+      const url = await handleUpload(renamedFile);
+
+      console.log(url);
     }
   };
   return (

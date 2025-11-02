@@ -6,18 +6,22 @@ export function useUploadImage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<any>(null);
   const [url, setUrl] = useState<string | null>(null);
+
   async function handleUpload(image: File) {
     const { data, error } = await uploadImage(image);
 
+    console.log(data);
     if (error) {
       setError(error);
     } else {
+      console.log(data);
       // Optionally get the public URL
       const { data: publicData } = client.storage
-        .from("images")
-        .getPublicUrl(data.fullPath);
+        .from("avatars")
+        .getPublicUrl(data.path);
 
       setUrl(publicData.publicUrl);
+      console.log(publicData.publicUrl);
       return publicData.publicUrl;
     }
 
