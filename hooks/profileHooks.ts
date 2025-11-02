@@ -16,10 +16,13 @@ export function useUploadImage() {
       const { data: publicData } = client.storage
         .from("images")
         .getPublicUrl(data.path);
+
+      console.log(data);
       setUrl(publicData.publicUrl);
     }
 
     setLoading(false);
+    return url;
   }
 
   return { handleUpload, loading, error, url };

@@ -24,9 +24,8 @@ const page = () => {
     const file = fileInput.files?.[0];
 
     if (file) {
-      await handleUpload(file);
+      const url = await handleUpload(file);
     }
-    console.log(url);
   };
   return (
     <>
