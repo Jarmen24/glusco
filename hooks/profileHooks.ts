@@ -1,6 +1,7 @@
 import client from "@/app/api/client";
-import { uploadImage } from "@/lib/posts";
+import { updateProfile, uploadImage } from "@/lib/posts";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export function useUploadImage() {
   const [loading, setLoading] = useState(false);
@@ -30,4 +31,41 @@ export function useUploadImage() {
   }
 
   return { handleUpload, loading, error, url };
+}
+
+export function useUpdateProfile() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  async function handleUpdateProfile({
+    name,
+    username,
+    email,
+    profile_picture,
+  }: {
+    name: string;
+    username: string;
+    email: string;
+    profile_picture?: string;
+  }) {
+    setLoading(true);
+    setError(null);
+
+    const updateData: any = { name, username, email };
+    if (profile_picture) updateData.profile_picture = profile_picture;
+
+    const { data, error } = await updateProfile(updateData);
+    setLoading(false);
+
+    if (error) {
+      setError(error);
+      toast.error("Failed to update profile");
+      return null;
+    }
+
+    toast.success("Profile updated successfully");
+    return data;
+  }
+
+  return { handleUpdateProfile, loading, error };
 }
