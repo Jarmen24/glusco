@@ -15,10 +15,10 @@ export function useUploadImage() {
       // Optionally get the public URL
       const { data: publicData } = client.storage
         .from("images")
-        .getPublicUrl(data.path);
+        .getPublicUrl(data.fullPath);
 
-      console.log(data);
       setUrl(publicData.publicUrl);
+      return publicData.publicUrl;
     }
 
     setLoading(false);
