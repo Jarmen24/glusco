@@ -26,13 +26,12 @@ const Login = () => {
         password,
       });
 
-    if (authData) {
-      toast.success("Login successful");
-      return;
-    }
-
     if (authError) {
       toast.error(authError.message);
+      return;
+    }
+    if (authData) {
+      toast.success("Login successful");
       return;
     }
   };

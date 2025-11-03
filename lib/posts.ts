@@ -20,3 +20,7 @@ export async function updateProfile({
     .update({ name, username, email, profile_picture })
     .eq("email", email);
 }
+
+export async function updatePassword(password: string) {
+  return await client.auth.updateUser({ password });
+}

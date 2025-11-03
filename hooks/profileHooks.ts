@@ -1,5 +1,5 @@
 import client from "@/app/api/client";
-import { updateProfile, uploadImage } from "@/lib/posts";
+import { updatePassword, updateProfile, uploadImage } from "@/lib/posts";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -68,4 +68,29 @@ export function useUpdateProfile() {
   }
 
   return { handleUpdateProfile, loading, error };
+}
+
+export function useUpdatePassword() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  async function handleUpdatePassword(password: string) {
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await updatePassword(password);
+
+    setLoading(false);
+
+    if (error) {
+      setError(error);
+      toast.error("Failed to update password");
+      return null;
+    }
+
+    toast.success("Password updated successfully");
+    return data;
+  }
+
+  return { handleUpdatePassword, loading, error };
 }

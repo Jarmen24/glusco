@@ -2,11 +2,25 @@
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { InputGroup, InputGroupInput } from "@/components/ui/input-group";
 import { Label } from "@/components/ui/label";
 import { SidebarInset } from "@/components/ui/sidebar";
-import { useUpdateProfile, useUploadImage } from "@/hooks/profileHooks";
+import {
+  useUpdatePassword,
+  useUpdateProfile,
+  useUploadImage,
+} from "@/hooks/profileHooks";
 import { useGetUser } from "@/hooks/userHooks";
 import Link from "next/link";
 import React from "react";
@@ -21,11 +35,35 @@ const page = () => {
     loading: updateLoading,
     error,
   } = useUpdateProfile();
+  const {
+    handleUpdatePassword,
+    loading: passwordLoading,
+    error: passwordError,
+  } = useUpdatePassword();
 
   const [editing, setEditing] = React.useState(false);
 
   const handleEdit = () => {
     setEditing(!editing);
+  };
+
+  const handleUpdatePasswordForm = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
+    const new_password = e.currentTarget.new_password.value;
+    const confirm_password = e.currentTarget.confirm_password.value;
+
+    if (!new_password || !confirm_password) {
+      toast.error("Please enter a new password and confirm it.");
+      return;
+    }
+
+    if (new_password !== confirm_password) {
+      toast.error("Passwords do not match.");
+      return;
+    }
+
+    const data = await handleUpdatePassword(new_password);
   };
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -176,14 +214,67 @@ const page = () => {
 
                           <div className="grid gap-2">
                             <Label>Password</Label>
-                            <Link href="#">
-                              <Button
-                                className="lg:text-base text-sm font-normal cursor-pointer"
-                                variant="outline"
-                              >
-                                Change Password
-                              </Button>
-                            </Link>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="cursor-pointer outline"
+                                >
+                                  Change Password
+                                </Button>
+                              </DialogTrigger>
+
+                              <DialogContent className="sm:max-w-[700px]">
+                                <form onSubmit={handleUpdatePasswordForm}>
+                                  <DialogHeader>
+                                    <DialogTitle>Change Password</DialogTitle>
+                                    <DialogDescription>
+                                      Make sure you remember it this time.
+                                    </DialogDescription>
+                                  </DialogHeader>
+                                  <div className="grid gap-4 my-4">
+                                    <div className="grid gap-3">
+                                      <Label htmlFor="title">
+                                        New Password
+                                      </Label>
+                                      <Input
+                                        id="new_password"
+                                        name="new_password"
+                                        placeholder="Enter your new password here"
+                                        type="password"
+                                      />
+                                    </div>
+                                    <div className="grid gap-3">
+                                      <Label htmlFor="title">
+                                        Confirm Password
+                                      </Label>
+                                      <Input
+                                        id="confirm_password"
+                                        name="confirm_password"
+                                        placeholder="Confirm your new password here"
+                                        type="password"
+                                      />
+                                    </div>
+                                  </div>
+                                  <DialogFooter>
+                                    <DialogClose asChild>
+                                      <Button
+                                        variant="outline"
+                                        className="cursor-pointer"
+                                      >
+                                        Cancel
+                                      </Button>
+                                    </DialogClose>
+                                    <Button
+                                      type="submit"
+                                      className="cursor-pointer"
+                                    >
+                                      Save changes
+                                    </Button>
+                                  </DialogFooter>
+                                </form>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
                       </div>

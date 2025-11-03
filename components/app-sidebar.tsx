@@ -54,11 +54,7 @@ const data = {
     { title: "Forum", url: "/forum", icon: IconMessages },
     { title: "Better You", url: "/betteryou", icon: IconApple },
   ],
-  documents: [
-    { name: "View Profile", url: "/profile", icon: IconUser },
-    { name: "Reports", url: "#", icon: IconReport },
-    { name: "Word Assistant", url: "#", icon: IconFileWord },
-  ],
+  documents: [{ name: "View Profile", url: "/profile", icon: IconUser }],
 };
 
 interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {

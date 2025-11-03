@@ -5,6 +5,8 @@ import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import SplitText from "@/components/SplitText";
+
 import {
   IconArrowBigRightFilled,
   IconDropletFilled,
@@ -20,8 +22,11 @@ import { User } from "@supabase/supabase-js";
 import { useSaveUser } from "@/hooks/useSaveUser";
 import useAuth from "@/hooks/useAuth";
 import { AuthContext } from "@/components/context/AuthProvider";
+import { useGetUser } from "@/hooks/userHooks";
 
 export default function Page() {
+  const userDB = useGetUser();
+  console.log(userDB);
   const user = useContext(AuthContext);
   const [prediction, setPrediction] = useState<string | null>(null);
   useEffect(() => {
@@ -56,14 +61,14 @@ export default function Page() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            Age: 21,
+            Age: 56,
             Gender: 2,
             Height_cm: 160,
-            Weight_kg: 50,
+            Weight_kg: 45,
             Waist_cm: 100,
             Hip_cm: 83,
             Systolic_BP: 120,
-            Diastolic_BP: 80,
+            Diastolic_BP: 90,
           }),
         });
 
@@ -83,16 +88,32 @@ export default function Page() {
     fetchPrediction();
   }, []);
   const percentage = prediction ? parseFloat(prediction) * 100 : 0;
-
+  const handleAnimationComplete = () => {
+    console.log("All letters have animated!");
+  };
   return (
     <>
       <SidebarInset>
         <SiteHeader title="Dashboard" />
         <div className="px-5">
           <div className="lg:p-4 p-3">
-            <h1 className="font-bold lg:text-6xl md:text-3xl text-2xl text-primary">
-              Welcome back, Jarmen! 👋
-            </h1>
+            {userDB ? (
+              <SplitText
+                text={`Welcome back, ${userDB?.username}! 👋`}
+                className="font-bold lg:text-4xl md:text-3xl text-2xl text-primary p-4 pl-0"
+                delay={100}
+                duration={0.6}
+                ease="power3.out"
+                splitType="chars"
+                from={{ opacity: 0, y: 40 }}
+                to={{ opacity: 1, y: 0 }}
+                threshold={0.1}
+                rootMargin="-100px"
+                textAlign="start"
+                onLetterAnimationComplete={handleAnimationComplete}
+              />
+            ) : null}
+
             <p className="text-slate-600 pt-3">
               Here’s your current health summary based on your latest analysis.
             </p>
