@@ -2,7 +2,6 @@
 module.exports = {
   content: [
     "./app/**/*.{js,ts,jsx,tsx}",
-    "./app/***/**/*.{js,ts,jsx,tsx}",
     "./pages/**/*.{js,ts,jsx,tsx}",
     "./components/**/*.{js,ts,jsx,tsx}",
   ],
@@ -15,6 +14,7 @@ module.exports = {
         brand_lightpurple: "#E8D9EE",
         brand_offwhite: "#F8F3ED",
         brand_vibrantblue: "#446CC3",
+        brand_beige: "#F8F3ED",
       },
     },
   },

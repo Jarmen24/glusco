@@ -108,6 +108,7 @@ const page = () => {
       if (data) {
         toast.success("Profile updated successfully");
       }
+      handleEdit();
     }
   };
 

@@ -1,13 +1,10 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { SyncLoader } from "react-spinners";
-import { useGetUser } from "@/hooks/userHooks";
+import { SidebarProvider } from "@/components/ui/sidebar";
 
 interface PrivatePagesLayoutProps {
   children: React.ReactNode;
@@ -18,12 +15,18 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
 }) => {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // ✅ Check if sidebar should be hidden
+  const hideSidebar = pathname?.startsWith("/multi-step-form");
+
   useEffect(() => {
     if (!loading && !user) {
       router.push("/"); // redirect to login or homepage
     }
   }, [user, loading, router]);
 
+  if (loading) return null;
   if (!user) return null;
 
   return (
@@ -35,7 +38,8 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
         } as React.CSSProperties
       }
     >
-      <AppSidebar variant="inset" user={user} />
+      {/* ✅ Only show sidebar when not on multi-step form */}
+      {!hideSidebar && <AppSidebar variant="inset" user={user} />}
       {children}
     </SidebarProvider>
   );
