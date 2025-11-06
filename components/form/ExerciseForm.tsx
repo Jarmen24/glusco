@@ -10,19 +10,25 @@ import {
 } from "../ui/input-group";
 import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
-const ExerciseForm = () => {
-  const [exerciseFormAnswers, setExerciseFormAnswers] = useState({
-    doesExercise: "2",
-    exercise_times: "4",
-    exercise_duration: "5",
-    sitting: "",
-    main_activity: "",
-    mode_of_transpo: "",
-  });
+interface ExerciseFormProps {
+  exercise_times: string;
+  exercise_duration: string;
+  sitting: string;
+  main_activity: string;
+  mode_of_transpo: string;
+  doesExercise: string;
+  updateFields: (fields: Partial<ExerciseFormProps>) => void;
+}
 
-  const handleValueChange = (key: string, value: string) => {
-    setExerciseFormAnswers((prev) => ({ ...prev, [key]: value }));
-  };
+const ExerciseForm: React.FC<ExerciseFormProps> = ({
+  doesExercise,
+  exercise_times,
+  exercise_duration,
+  sitting,
+  main_activity,
+  mode_of_transpo,
+  updateFields,
+}) => {
   return (
     <div>
       <div className="flex flex-col gap-3 mt-2">
@@ -37,10 +43,8 @@ const ExerciseForm = () => {
       <div className="grid gap-2 bg-white rounded-2xl p-5">
         <Label className="text-xl">Do you exercise?</Label>
         <RadioGroup
-          value={exerciseFormAnswers.doesExercise}
-          onValueChange={(val) => {
-            handleValueChange("doesExercise", val);
-          }}
+          value={doesExercise}
+          onValueChange={(value) => updateFields({ doesExercise: value })}
           defaultValue="comfortable"
           className="flex flex-col gap-3 ml-3 mt-3"
         >
@@ -50,7 +54,7 @@ const ExerciseForm = () => {
               htmlFor="1"
               className={`flex w-full gap-3 border-2 rounded-2xl p-3 items-center cursor-pointer transition
                             ${
-                              exerciseFormAnswers.doesExercise === "1"
+                              doesExercise === "1"
                                 ? "border-blue-600 bg-blue-100"
                                 : "bg-blue-50"
                             }`}
@@ -70,9 +74,7 @@ const ExerciseForm = () => {
             <Label
               htmlFor="2"
               className={`flex w-full gap-3 border-2 rounded-2xl p-3 items-center cursor-pointer transition ${
-                exerciseFormAnswers.doesExercise === "2"
-                  ? "border-red-600 bg-red-100"
-                  : "bg-red-50"
+                doesExercise === "2" ? "border-red-600 bg-red-100" : "bg-red-50"
               }`}
             >
               <RadioGroupItem
@@ -88,7 +90,7 @@ const ExerciseForm = () => {
           </div>
         </RadioGroup>
       </div>
-      {exerciseFormAnswers.doesExercise === "1" && (
+      {doesExercise === "1" && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-5 items-start">
           {/* Left side */}
           <div className="grid gap-4">
@@ -96,9 +98,9 @@ const ExerciseForm = () => {
             <div className="grid gap-2 bg-white rounded-2xl p-5">
               <Label className="text-xl">How often do you exercise?</Label>
               <RadioGroup
-                value={exerciseFormAnswers.exercise_times}
-                onValueChange={(val) =>
-                  handleValueChange("exercise_times", val)
+                value={exercise_times}
+                onValueChange={(value) =>
+                  updateFields({ exercise_times: value })
                 }
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"
@@ -123,9 +125,9 @@ const ExerciseForm = () => {
                 On average, how long is each session of physical activity?
               </Label>
               <RadioGroup
-                value={exerciseFormAnswers.exercise_duration}
-                onValueChange={(val) =>
-                  handleValueChange("exercise_duration", val)
+                value={exercise_duration}
+                onValueChange={(value) =>
+                  updateFields({ exercise_duration: value })
                 }
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"
@@ -155,8 +157,8 @@ const ExerciseForm = () => {
                 desk work, TV, gaming)?
               </Label>
               <RadioGroup
-                value={exerciseFormAnswers.sitting}
-                onValueChange={(val) => handleValueChange("sitting", val)}
+                value={sitting}
+                onValueChange={(value) => updateFields({ sitting: value })}
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"
               >
@@ -186,31 +188,33 @@ const ExerciseForm = () => {
                 What best describes your main activity?
               </Label>
               <RadioGroup
-                value={exerciseFormAnswers.main_activity}
-                onValueChange={(val) => handleValueChange("main_activity", val)}
+                value={main_activity}
+                onValueChange={(value) =>
+                  updateFields({ main_activity: value })
+                }
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"
               >
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="5" id="5" />
-                  <Label htmlFor="5">
+                  <RadioGroupItem value="4" id="4" />
+                  <Label htmlFor="4">
                     Mostly sedentary (sitting most of the day)
                   </Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="4" id="4" />
-                  <Label htmlFor="4">Light standing or walking</Label>
+                  <RadioGroupItem value="3" id="3" />
+                  <Label htmlFor="3">Light standing or walking</Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="3" id="3" />
-                  <Label htmlFor="3">
+                  <RadioGroupItem value="2" id="2" />
+                  <Label htmlFor="2">
                     Moderate physical activity (e.g. regular walking or light
                     work)
                   </Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="4" id="4" />
-                  <Label htmlFor="4">
+                  <RadioGroupItem value="1" id="1" />
+                  <Label htmlFor="1">
                     Vigorous physical activity (e.g. heavy work)
                   </Label>
                 </div>
@@ -224,9 +228,9 @@ const ExerciseForm = () => {
                 or places?
               </Label>
               <RadioGroup
-                value={exerciseFormAnswers.mode_of_transpo}
-                onValueChange={(val) =>
-                  handleValueChange("mode_of_transpo", val)
+                value={mode_of_transpo}
+                onValueChange={(value) =>
+                  updateFields({ mode_of_transpo: value })
                 }
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"
@@ -255,7 +259,7 @@ const ExerciseForm = () => {
         </div>
       )}
 
-      {exerciseFormAnswers.doesExercise === "2" && (
+      {doesExercise === "2" && (
         <div className="grid grid-cols-1  gap-4 mt-5 items-start">
           {/* Sitting */}
           <div className="grid gap-2 bg-white rounded-2xl p-5">
@@ -264,8 +268,8 @@ const ExerciseForm = () => {
               desk work, TV, gaming)?
             </Label>
             <RadioGroup
-              value={exerciseFormAnswers.sitting}
-              onValueChange={(val) => handleValueChange("sitting", val)}
+              value={sitting}
+              onValueChange={(value) => updateFields({ sitting: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -295,31 +299,33 @@ const ExerciseForm = () => {
                 What best describes your main activity?
               </Label>
               <RadioGroup
-                value={exerciseFormAnswers.main_activity}
-                onValueChange={(val) => handleValueChange("main_activity", val)}
+                value={main_activity}
+                onValueChange={(value) =>
+                  updateFields({ main_activity: value })
+                }
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"
               >
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="5" id="5" />
-                  <Label htmlFor="5">
+                  <RadioGroupItem value="4" id="4" />
+                  <Label htmlFor="4">
                     Mostly sedentary (sitting most of the day)
                   </Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="4" id="4" />
-                  <Label htmlFor="4">Light standing or walking</Label>
+                  <RadioGroupItem value="3" id="3" />
+                  <Label htmlFor="3">Light standing or walking</Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="3" id="3" />
-                  <Label htmlFor="3">
+                  <RadioGroupItem value="2" id="2" />
+                  <Label htmlFor="2">
                     Moderate physical activity (e.g. regular walking or light
                     work)
                   </Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="2" id="2" />
-                  <Label htmlFor="2">
+                  <RadioGroupItem value="1" id="1" />
+                  <Label htmlFor="1">
                     Vigorous physical activity (e.g. heavy work)
                   </Label>
                 </div>
@@ -333,9 +339,9 @@ const ExerciseForm = () => {
                 or places?
               </Label>
               <RadioGroup
-                value={exerciseFormAnswers.mode_of_transpo}
-                onValueChange={(val) =>
-                  handleValueChange("mode_of_transpo", val)
+                value={mode_of_transpo}
+                onValueChange={(value) =>
+                  updateFields({ mode_of_transpo: value })
                 }
                 defaultValue="comfortable"
                 className="flex flex-col gap-3 ml-3 mt-3"

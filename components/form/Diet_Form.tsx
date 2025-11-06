@@ -10,22 +10,29 @@ import {
 } from "../ui/input-group";
 import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
-const DietForm = () => {
-  const [dietFormAnswers, setDietFormAnswers] = useState({
-    fruits: "",
-    vegetables: "",
-    fried: "",
-    sweets: "",
-    fastfood: "",
-    processed: "",
-    softdrink: "",
-    weight: "",
-  });
+interface DietFormProps {
+  fruits: string;
+  vegetables: string;
+  fried: string;
+  sweets: string;
+  fastfood: string;
+  processed: string;
+  softdrink: string;
+  weight_concern: string;
+  updateFields: (fields: Partial<DietFormProps>) => void;
+}
 
-  const handleValueChange = (key: string, value: string) => {
-    setDietFormAnswers((prev) => ({ ...prev, [key]: value }));
-    console.log(dietFormAnswers);
-  };
+const DietForm: React.FC<DietFormProps> = ({
+  fruits,
+  vegetables,
+  fried,
+  sweets,
+  fastfood,
+  processed,
+  softdrink,
+  weight_concern,
+  updateFields,
+}) => {
   return (
     <div>
       <div className="flex flex-col gap-3 mt-2">
@@ -44,8 +51,8 @@ const DietForm = () => {
           <div className="grid gap-2 bg-white rounded-2xl p-5">
             <Label className="text-xl">How often do you consume fruits?</Label>
             <RadioGroup
-              value={dietFormAnswers.fruits}
-              onValueChange={(val) => handleValueChange("fruits", val)}
+              value={fruits}
+              onValueChange={(value) => updateFields({ fruits: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -77,8 +84,8 @@ const DietForm = () => {
               How often do you consume vegetables?
             </Label>
             <RadioGroup
-              value={dietFormAnswers.vegetables}
-              onValueChange={(val) => handleValueChange("vegetables", val)}
+              value={vegetables}
+              onValueChange={(value) => updateFields({ vegetables: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -108,8 +115,8 @@ const DietForm = () => {
           <div className="grid gap-2 bg-white rounded-2xl p-5">
             <Label className="text-xl">How often do you eat sweets?</Label>
             <RadioGroup
-              value={dietFormAnswers.sweets}
-              onValueChange={(val) => handleValueChange("sweets", val)}
+              value={sweets}
+              onValueChange={(value) => updateFields({ sweets: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -139,8 +146,8 @@ const DietForm = () => {
           <div className="grid gap-2 bg-white rounded-2xl p-5">
             <Label className="text-xl">How often do you eat fried foods?</Label>
             <RadioGroup
-              value={dietFormAnswers.fried}
-              onValueChange={(val) => handleValueChange("fried", val)}
+              value={fried}
+              onValueChange={(value) => updateFields({ fried: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -174,8 +181,8 @@ const DietForm = () => {
               How often do you eat fast foods (e.g Jollibee)?
             </Label>
             <RadioGroup
-              value={dietFormAnswers.fastfood}
-              onValueChange={(val) => handleValueChange("fastfood", val)}
+              value={fastfood}
+              onValueChange={(value) => updateFields({ fastfood: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -209,8 +216,8 @@ const DietForm = () => {
               canned meat)?
             </Label>
             <RadioGroup
-              value={dietFormAnswers.processed}
-              onValueChange={(val) => handleValueChange("processed", val)}
+              value={processed}
+              onValueChange={(value) => updateFields({ processed: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -243,8 +250,8 @@ const DietForm = () => {
               sweetened coffee/tea, juice)?
             </Label>
             <RadioGroup
-              value={dietFormAnswers.softdrink}
-              onValueChange={(val) => handleValueChange("softdrink", val)}
+              value={softdrink}
+              onValueChange={(value) => updateFields({ softdrink: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -277,30 +284,22 @@ const DietForm = () => {
               Have you tried to lose or maintain weight in the past 6 months?
             </Label>
             <RadioGroup
-              value={dietFormAnswers.weight}
-              onValueChange={(val) => handleValueChange("weight", val)}
+              value={weight_concern}
+              onValueChange={(value) => updateFields({ weight_concern: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
                 <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Never</Label>
+                <Label htmlFor="1">Yes, Successfully</Label>
               </div>
               <div className="flex items-center gap-3">
                 <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Rarely (less than 3 servings/week)</Label>
+                <Label htmlFor="2">Yes, but no significant change</Label>
               </div>
               <div className="flex items-center gap-3">
                 <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Frequently (1-2 servings/day)</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Daily (3+servings/day)</Label>
+                <Label htmlFor="3">No attempt</Label>
               </div>
             </RadioGroup>
           </div>

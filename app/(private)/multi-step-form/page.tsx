@@ -34,6 +34,20 @@ type FormData = {
   fbs?: string;
   cholesterol?: string;
   hdl?: string;
+  fruits: string;
+  vegetables: string;
+  fried: string;
+  sweets: string;
+  fastfood: string;
+  processed: string;
+  softdrink: string;
+  weight_concern: string;
+  doesExercise: string;
+  exercise_times: string;
+  exercise_duration: string;
+  sitting: string;
+  main_activity: string;
+  mode_of_transpo: string;
 };
 
 const INITIAL_DATA: FormData = {
@@ -51,6 +65,20 @@ const INITIAL_DATA: FormData = {
   fbs: "",
   cholesterol: "",
   hdl: "",
+  fruits: "",
+  vegetables: "",
+  fried: "",
+  sweets: "",
+  fastfood: "",
+  processed: "",
+  softdrink: "",
+  weight_concern: "",
+  doesExercise: "",
+  exercise_times: "",
+  exercise_duration: "",
+  sitting: "",
+  main_activity: "",
+  mode_of_transpo: "",
 };
 
 const MultiForm = () => {
@@ -65,8 +93,8 @@ const MultiForm = () => {
   const { steps, step, currentStepIndex, isFirstStep, back, next, isLastStep } =
     useMultiStepForm([
       <ClinicalForm {...data} updateFields={updateFields} />,
-      <DietForm />,
-      <ExerciseForm />,
+      <DietForm {...data} updateFields={updateFields} />,
+      <ExerciseForm {...data} updateFields={updateFields} />,
       <SleepForm />,
       <FamilyForm />,
     ]);
@@ -123,6 +151,51 @@ const MultiForm = () => {
       const namePattern = /^[A-Za-z\s]+$/;
       if (!namePattern.test(data.name)) {
         toast.error("Name should only contain letters and spaces.");
+        return;
+      }
+    }
+
+    // Step 2
+    if (currentStepIndex === 1) {
+      const requiredFields = [
+        "fruits",
+        "vegetables",
+        "fried",
+        "sweets",
+        "fastfood",
+        "processed",
+        "softdrink",
+        "weight_concern",
+      ];
+
+      // Check for empty fields
+      const emptyFields = requiredFields.filter(
+        (field) => !data[field as keyof FormData]
+      );
+      console.log(emptyFields);
+      if (emptyFields.length > 0) {
+        toast.error("Please fill in all required fields before continuing.");
+        return;
+      }
+    }
+
+    if (currentStepIndex === 2) {
+      const requiredFields = [
+        "doesExercise",
+        "exercise_times",
+        "exercise_duration",
+        "sitting",
+        "main_activity",
+        "mode_of_transpo",
+      ];
+
+      // Check for empty fields
+      const emptyFields = requiredFields.filter(
+        (field) => !data[field as keyof FormData]
+      );
+      console.log(emptyFields);
+      if (emptyFields.length > 0) {
+        toast.error("Please fill in all required fields before continuing.");
         return;
       }
     }
