@@ -45,19 +45,19 @@ const SleepForm = () => {
             className="flex flex-col gap-3 ml-3 mt-3"
           >
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="4" id="4" />
+              <RadioGroupItem value="4" id="sleepHours-4" />
               <Label htmlFor="4">Less than 5 hours</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="3" id="3" />
+              <RadioGroupItem value="3" id="sleepHours-3" />
               <Label htmlFor="3">5-6 hours</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="2" id="2" />
+              <RadioGroupItem value="2" id="sleepHours-2" />
               <Label htmlFor="2">7-8 hours</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="1" id="1" />
+              <RadioGroupItem value="1" id="sleepHours-1" />
               <Label htmlFor="1">More than 8 hours</Label>
             </div>
           </RadioGroup>
@@ -73,25 +73,25 @@ const SleepForm = () => {
             className="flex flex-col gap-3 ml-3 mt-3"
           >
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="1" id="1" />
+              <RadioGroupItem value="1" id="cigarette-1" />
               <Label htmlFor="1">Never</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="2" id="2" />
+              <RadioGroupItem value="2" id="cigarette-2" />
               <Label htmlFor="2">Occasionally</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="3" id="3" />
+              <RadioGroupItem value="3" id="cigarette-3" />
               <Label htmlFor="3">Regularly</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="4" id="4" />
+              <RadioGroupItem value="4" id="cigarette-4" />
               <Label htmlFor="4">Former Smoker</Label>
             </div>
           </RadioGroup>
         </div>
 
-        {/* Cigarette */}
+        {/* Alcohol */}
         <div className="grid gap-2 bg-white rounded-2xl p-5">
           <Label className="text-xl">Do you consume alcohol? </Label>
           <RadioGroup
@@ -101,19 +101,19 @@ const SleepForm = () => {
             className="flex flex-col gap-3 ml-3 mt-3"
           >
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="1" id="1" />
+              <RadioGroupItem value="1" id="alcohol-1" />
               <Label htmlFor="1">Never</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="2" id="2" />
+              <RadioGroupItem value="2" id="alcohol-2" />
               <Label htmlFor="2">Occasionally</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="3" id="3" />
+              <RadioGroupItem value="3" id="alcohol-3" />
               <Label htmlFor="3">Weekly</Label>
             </div>
             <div className="flex items-center gap-3">
-              <RadioGroupItem value="4" id="4" />
+              <RadioGroupItem value="4" id="alcohol-4" />
               <Label htmlFor="4">Almost Daily</Label>
             </div>
           </RadioGroup>

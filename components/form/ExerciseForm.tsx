@@ -318,8 +318,8 @@ const ExerciseForm = () => {
                   </Label>
                 </div>
                 <div className="flex items-center gap-3">
-                  <RadioGroupItem value="4" id="4" />
-                  <Label htmlFor="4">
+                  <RadioGroupItem value="2" id="2" />
+                  <Label htmlFor="2">
                     Vigorous physical activity (e.g. heavy work)
                   </Label>
                 </div>

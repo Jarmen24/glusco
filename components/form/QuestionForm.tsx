@@ -29,7 +29,15 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ onValueChange }) => {
         value={selectedValue}
         onValueChange={handleValueChange}
         className="w-full mt-4"
+        required
       >
+        <input
+          type="hidden"
+          name="blood_glucose"
+          value={selectedValue}
+          required
+        />
+
         <div className="flex flex-col lg:flex-row gap-3 w-full">
           {/* YES OPTION */}
           <Label
