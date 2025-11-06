@@ -26,7 +26,7 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
 
   if (!user) return null;
 
-  return <div className="h-screen w-full bg-[#F8F3ED]">{children}</div>;
+  return <div className="w-full bg-[#F8F3ED] py-6">{children}</div>;
 };
 
 export default PrivatePagesLayout;

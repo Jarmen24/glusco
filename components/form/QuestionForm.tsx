@@ -17,7 +17,7 @@ const QuestionForm: React.FC<QuestionFormProps> = ({ onValueChange }) => {
 
   return (
     <div className="flex flex-col w-full gap-3 mt-4">
-      <h1 className="font-bold lg:text-4xl text-lg text-blue-950">
+      <h1 className="font-bold lg:text-4xl text-2xl text-blue-950">
         Do you know your blood glucose levels?
       </h1>
       <p className="lg:text-lg text-sm">

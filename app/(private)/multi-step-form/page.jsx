@@ -12,13 +12,22 @@ import {
 import useMultiStepForm from "@/hooks/useMultiStepForm";
 import QuestionForm from "@/components/form/QuestionForm";
 import ClinicalForm from "@/components/form/ClinicalForm";
+import DietForm from "@/components/form/Diet_Form";
+import ExerciseForm from "@/components/form/ExerciseForm";
+import SleepForm from "@/components/form/SleepForm";
 
 const MultiForm = () => {
   const { steps, step, currentStepIndex, isFirstStep, back, next, isLastStep } =
-    useMultiStepForm([<QuestionForm />, <ClinicalForm />]);
+    useMultiStepForm([
+      <QuestionForm />,
+      <ClinicalForm />,
+      <DietForm />,
+      <ExerciseForm />,
+      <SleepForm />,
+    ]);
 
   return (
-    <div className="h-screen flex items-center justify-center w-full">
+    <div className=" flex items-center justify-center w-full">
       <Card className="w-full max-w-[1000px] p-4 px-6 bg-[#F8F3ED] shadow-none outline-none border-0">
         <form>
           <div className="w-full flex flex-col justify-between items-start">
