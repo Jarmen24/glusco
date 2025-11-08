@@ -181,7 +181,7 @@ export default function Page() {
               </div>
               <div className="w-full justify-start items-start flex flex-col bg-slate-200 rounded-md lg:p-6 p-3">
                 <h1 className="font-bold lg:text-6xl md:text-3xl text-2xl text-primary">
-                  Forum! 📰
+                  Forum 📰
                 </h1>
                 <p className="text-slate-600 pt-3">
                   Search trending topics and join the discussion.

@@ -10,16 +10,19 @@ import {
 } from "../ui/input-group";
 import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
-const SleepForm = () => {
-  const [sleepFormAnswers, setSleepFormAnswers] = useState({
-    sleepHours: "",
-    cigarette: "",
-    alcohol: "",
-  });
+type SleepFormProps = {
+  sleep_hours: string;
+  sleep_cigarette: string;
+  sleep_alcohol: string;
+  updateFields: (fields: Partial<SleepFormProps>) => void;
+};
 
-  const handleValueChange = (key: string, value: string) => {
-    setSleepFormAnswers((prev) => ({ ...prev, [key]: value }));
-  };
+const SleepForm: React.FC<SleepFormProps> = ({
+  sleep_hours,
+  sleep_cigarette,
+  sleep_alcohol,
+  updateFields,
+}) => {
   return (
     <div>
       <div className="flex flex-col gap-3 mt-2">
@@ -39,8 +42,8 @@ const SleepForm = () => {
             How many hours of sleep do you usually get per night?
           </Label>
           <RadioGroup
-            value={sleepFormAnswers.sleepHours}
-            onValueChange={(val) => handleValueChange("sleepHours", val)}
+            value={sleep_hours}
+            onValueChange={(value) => updateFields({ sleep_hours: value })}
             defaultValue="comfortable"
             className="flex flex-col gap-3 ml-3 mt-3"
           >
@@ -67,8 +70,8 @@ const SleepForm = () => {
         <div className="grid gap-2 bg-white rounded-2xl p-5">
           <Label className="text-xl">Do you smoke cigarettes or vape? </Label>
           <RadioGroup
-            value={sleepFormAnswers.cigarette}
-            onValueChange={(val) => handleValueChange("cigarette", val)}
+            value={sleep_cigarette}
+            onValueChange={(value) => updateFields({ sleep_cigarette: value })}
             defaultValue="comfortable"
             className="flex flex-col gap-3 ml-3 mt-3"
           >
@@ -95,8 +98,8 @@ const SleepForm = () => {
         <div className="grid gap-2 bg-white rounded-2xl p-5">
           <Label className="text-xl">Do you consume alcohol? </Label>
           <RadioGroup
-            value={sleepFormAnswers.alcohol}
-            onValueChange={(val) => handleValueChange("alcohol", val)}
+            value={sleep_alcohol}
+            onValueChange={(value) => updateFields({ sleep_alcohol: value })}
             defaultValue="comfortable"
             className="flex flex-col gap-3 ml-3 mt-3"
           >

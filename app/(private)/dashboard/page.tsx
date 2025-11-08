@@ -23,12 +23,21 @@ import { useSaveUser } from "@/hooks/useSaveUser";
 import useAuth from "@/hooks/useAuth";
 import { AuthContext } from "@/components/context/AuthProvider";
 import { useGetUser } from "@/hooks/userHooks";
+import { useGetUserWithPrediction } from "@/hooks/profileHooks";
+import { SyncLoader } from "react-spinners";
 
 export default function Page() {
   const userDB = useGetUser();
   console.log(userDB);
   const user = useContext(AuthContext);
-  const [prediction, setPrediction] = useState<string | null>(null);
+  const [prediction, setPrediction] = useState<number | null>(null);
+  const [riskLabel, setRiskLabel] = useState<string>("");
+  const [color, setColor] = useState<string>("#0B1956"); // default color
+
+  const { fetchUserWithPrediction, loading, error } = useGetUserWithPrediction(
+    userDB ? parseInt(userDB.id) : 0
+  );
+
   useEffect(() => {
     const syncUser = async () => {
       const {
@@ -54,40 +63,34 @@ export default function Page() {
 
     syncUser();
   }, []);
-  useEffect(() => {
-    const fetchPrediction = async () => {
-      try {
-        const response = await fetch("http://127.0.0.1:8000/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            Age: 56,
-            Gender: 2,
-            Height_cm: 160,
-            Weight_kg: 45,
-            Waist_cm: 100,
-            Hip_cm: 83,
-            Systolic_BP: 120,
-            Diastolic_BP: 90,
-          }),
-        });
+  const handleLoadPrediction = async () => {
+    if (!userDB) return;
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
-        }
+    const { data, error } = await fetchUserWithPrediction();
+    if (error) return console.error(error);
 
-        const result = await response.json();
-        console.log(result);
-        setPrediction(result.probability);
-      } catch (error) {
-        console.error("Error fetching prediction:", error);
-        setPrediction("Error fetching prediction");
+    if (data && data.pred && data.pred.length > 0) {
+      const percent = Math.round(data.pred[0].percent);
+      setPrediction(percent);
+
+      // Determine risk level and color
+      if (percent < 30) {
+        setRiskLabel("Low Risk");
+        setColor("#4CAF50"); // green
+      } else if (percent < 70) {
+        setRiskLabel("Moderate Risk");
+        setColor("#FF9800"); // orange
+      } else {
+        setRiskLabel("High Risk");
+        setColor("#F44336"); // red
       }
-    };
+    }
+  };
 
-    fetchPrediction();
-  }, []);
-  const percentage = prediction ? parseFloat(prediction) * 100 : 0;
+  useEffect(() => {
+    handleLoadPrediction();
+  }, [userDB]);
+
   const handleAnimationComplete = () => {
     console.log("All letters have animated!");
   };
@@ -123,16 +126,23 @@ export default function Page() {
               <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] items-center justify-center gap-10 col-span-1">
                 {/* Left side: fixed width for circular progress */}
                 <div className="h-40 w-40">
-                  <CircularProgressbar
-                    value={percentage}
-                    text={`${percentage}%`}
-                    strokeWidth={15}
-                    styles={buildStyles({
-                      textSize: "20px",
-                      textColor: "#0B1956",
-                      pathColor: "#0B1956",
-                    })}
-                  />
+                  {loading || prediction === null ? (
+                    <div className="flex items-center justify-center h-full">
+                      <SyncLoader color={color} />
+                    </div>
+                  ) : (
+                    <CircularProgressbar
+                      value={prediction}
+                      text={`${prediction}%`}
+                      strokeWidth={15}
+                      styles={buildStyles({
+                        textSize: "20px",
+                        textColor: color,
+                        pathColor: color,
+                        trailColor: "#E0E0E0",
+                      })}
+                    />
+                  )}
                 </div>
 
                 {/* Right side: fills remaining space */}
@@ -140,8 +150,11 @@ export default function Page() {
                   <p className="lg:text-lg md:text-md">
                     Your current risk level:
                   </p>
-                  <h1 className="font-bold text-4xl lg:text-5xl text-primary">
-                    Medium Risk
+                  <h1
+                    className="font-bold text-4xl lg:text-5xl"
+                    style={{ color: color }}
+                  >
+                    {riskLabel}
                   </h1>
                   <Button className="mt-4 cursor-pointer">
                     <IconArrowBigRightFilled />

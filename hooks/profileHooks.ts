@@ -1,5 +1,13 @@
 import client from "@/app/api/client";
-import { updatePassword, updateProfile, uploadImage } from "@/lib/posts";
+import {
+  getUserWithPrediction,
+  updateFormData,
+  updatePassword,
+  updatePrediction,
+  updateProfile,
+  updateUsername,
+  uploadImage,
+} from "@/lib/posts";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -93,4 +101,90 @@ export function useUpdatePassword() {
   }
 
   return { handleUpdatePassword, loading, error };
+}
+
+export function useUpdateUsername() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  async function handleUpdateUsername(username: string, email: string) {
+    setLoading(true);
+    setError(null);
+
+    const { data, error } = await updateUsername(username, email);
+    setLoading(false);
+
+    return { data, error };
+  }
+
+  return { handleUpdateUsername, loading, error };
+}
+
+export function useUpdateFormData() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  async function handleUpdateUserForm(data: Object, id: number) {
+    setLoading(true);
+    setError(null);
+
+    const { data: dataObject, error } = await updateFormData(data, id);
+    setLoading(false);
+
+    return { dataObject, error };
+  }
+
+  return { handleUpdateUserForm, loading, error };
+}
+
+export function useInsertPrediction() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  async function handleInsertPrediction(
+    id: number,
+    clinical: number,
+    lifestyle: number,
+    combined: number,
+    percent: number
+  ) {
+    setLoading(true);
+    setError(null);
+
+    const { data: predData, error } = await updatePrediction(
+      id,
+      clinical,
+      lifestyle,
+      combined,
+      percent
+    );
+    setLoading(false);
+
+    return { predData, error };
+  }
+
+  return { handleInsertPrediction, loading, error };
+}
+
+export function useGetUserWithPrediction(id: number) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<any>(null);
+
+  const fetchUserWithPrediction = async () => {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const { data, error } = await getUserWithPrediction(id);
+      if (error) throw error;
+      return { data, error: null };
+    } catch (err) {
+      setError(err);
+      return { data: null, error: err };
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { fetchUserWithPrediction, loading, error };
 }

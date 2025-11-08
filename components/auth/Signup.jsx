@@ -27,11 +27,10 @@ const Signup = () => {
     e.preventDefault();
     const formData = new FormData(e.target);
     const email = formData.get("email").trim();
-    const username = formData.get("username").trim();
     const name = formData.get("name").trim();
     const password = formData.get("password").trim();
     const confirm_password = formData.get("confirm_password").trim();
-    console.log(username.toLowerCase());
+
     if (!email || !password) {
       toast.error("Email and password are required");
       return;
@@ -59,7 +58,7 @@ const Signup = () => {
         toast.error("Email is already taken.");
         return;
       }
-
+      /**
       try {
         // 2️⃣ Check if username already exists
         const { data: usernameExists, error: usernameError } = await client
@@ -76,7 +75,7 @@ const Signup = () => {
       } catch (error) {
         toast.error("Username already taken.");
         return;
-      }
+      } */
 
       const { data: authData, error: authError } = await client.auth.signUp({
         email,
@@ -91,7 +90,6 @@ const Signup = () => {
       const save = useSaveUser(
         email,
         name,
-        username,
         profile_images[Math.floor(Math.random() * 5)]
       );
 
@@ -127,15 +125,6 @@ const Signup = () => {
             <div className="grid gap-2">
               <Label>Name</Label>
               <Input id="name" name="name" type="name" placeholder="John Doe" />
-            </div>
-            <div className="grid gap-2">
-              <Label>Username</Label>
-              <Input
-                id="username"
-                name="username"
-                type="username"
-                placeholder="yourusername"
-              />
             </div>
             <div className="grid gap-2">
               <Label>Password</Label>

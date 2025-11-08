@@ -11,7 +11,7 @@ import {
 import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
 type ClinicalData = {
-  name: string;
+  username: string;
   age: string;
   gender: string;
   knowbgl: string;
@@ -32,7 +32,7 @@ type ClinicalFormProps = ClinicalData & {
 };
 
 const ClinicalForm = ({
-  name,
+  username,
   age,
   gender,
   knowbgl,
@@ -66,16 +66,16 @@ const ClinicalForm = ({
       {/* Basic info section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5 content-start">
         <div className="grid gap-2 bg-white rounded-2xl p-5">
-          <Label>Name</Label>
+          <Label>Username</Label>
           <Input
-            id="name"
-            name="name"
+            id="username"
+            name="username"
             type="text"
             required
-            placeholder="Juan Dela Cruz"
+            placeholder="juandelacruz24"
             className="lg:text-base text-sm bg-gray-50 border-0"
-            value={name}
-            onChange={(e) => updateFields({ name: e.target.value })}
+            value={username}
+            onChange={(e) => updateFields({ username: e.target.value })}
           />
         </div>
 

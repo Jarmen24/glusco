@@ -18,7 +18,9 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
   const pathname = usePathname();
 
   // ✅ Check if sidebar should be hidden
-  const hideSidebar = pathname?.startsWith("/multi-step-form");
+  const hideSidebar =
+    pathname?.startsWith("/multi-step-form") ||
+    pathname?.startsWith("/prediction");
 
   useEffect(() => {
     if (!loading && !user) {

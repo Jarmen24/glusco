@@ -10,20 +10,23 @@ import {
 } from "../ui/input-group";
 import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
-const FamilyForm = () => {
-  const [familyFormAnswers, setFamilyFormAnswers] = useState({
-    father: "",
-    mother: "",
-    sister: "",
-    brother: "",
-    child: "",
-    extended: "",
-    concerned: "",
-  });
+type FamilyFormProps = {
+  fh_father: string;
+  fh_mother: string;
+  fh_sister: string;
+  fh_brother: string;
+  fh_extended: string;
+  updateFields: (fields: Partial<FamilyFormProps>) => void;
+};
 
-  const handleValueChange = (key: string, value: string) => {
-    setFamilyFormAnswers((prev) => ({ ...prev, [key]: value }));
-  };
+const FamilyForm: React.FC<FamilyFormProps> = ({
+  fh_father,
+  fh_mother,
+  fh_sister,
+  fh_brother,
+  fh_extended,
+  updateFields,
+}) => {
   return (
     <div>
       <div className="flex flex-col gap-3 mt-2">
@@ -45,8 +48,8 @@ const FamilyForm = () => {
               indicate the age at dignosis.)
             </Label>
             <RadioGroup
-              value={familyFormAnswers.father}
-              onValueChange={(val) => handleValueChange("father", val)}
+              value={fh_father}
+              onValueChange={(value) => updateFields({ fh_father: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -79,8 +82,8 @@ const FamilyForm = () => {
               indicate the age at dignosis.)
             </Label>
             <RadioGroup
-              value={familyFormAnswers.mother}
-              onValueChange={(val) => handleValueChange("mother", val)}
+              value={fh_mother}
+              onValueChange={(value) => updateFields({ fh_mother: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -113,8 +116,8 @@ const FamilyForm = () => {
               indicate the age at dignosis.)
             </Label>
             <RadioGroup
-              value={familyFormAnswers.sister}
-              onValueChange={(val) => handleValueChange("sister", val)}
+              value={fh_sister}
+              onValueChange={(value) => updateFields({ fh_sister: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -147,8 +150,8 @@ const FamilyForm = () => {
               indicate the age at dignosis.)
             </Label>
             <RadioGroup
-              value={familyFormAnswers.brother}
-              onValueChange={(val) => handleValueChange("brother", val)}
+              value={fh_brother}
+              onValueChange={(value) => updateFields({ fh_brother: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -183,8 +186,8 @@ const FamilyForm = () => {
               cousins) been diagnosed with Type 2 Diabetes?
             </Label>
             <RadioGroup
-              value={familyFormAnswers.extended}
-              onValueChange={(val) => handleValueChange("extended", val)}
+              value={fh_extended}
+              onValueChange={(value) => updateFields({ fh_extended: value })}
               defaultValue="comfortable"
               className="flex flex-col gap-3 ml-3 mt-3"
             >
@@ -199,36 +202,6 @@ const FamilyForm = () => {
               <div className="flex items-center gap-3">
                 <RadioGroupItem value="1" id="1" />
                 <Label htmlFor="1">Not sure</Label>
-              </div>
-            </RadioGroup>
-          </div>
-          {/* extended */}
-          <div className="grid gap-2 bg-white rounded-2xl p-5">
-            <Label className="text-xl">
-              How concerned are you about developing Type 2 Diabetes because of
-              your family history?  
-            </Label>
-            <RadioGroup
-              value={familyFormAnswers.concerned}
-              onValueChange={(val) => handleValueChange("concerned", val)}
-              defaultValue="comfortable"
-              className="flex flex-col gap-3 ml-3 mt-3"
-            >
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Very Concerned</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Somewhat Concerned</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Slightly Concerned</Label>
-              </div>
-              <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Not Concerned</Label>
               </div>
             </RadioGroup>
           </div>
