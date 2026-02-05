@@ -1,3 +1,4 @@
+import { FormData } from "@/app/(private)/multi-step-form/page";
 import client from "@/app/api/client";
 
 export async function uploadImage(image: File) {
@@ -87,10 +88,7 @@ export async function getUserFormData(id: number) {
     .limit(1)
     .maybeSingle();
 }
-export async function updateFormData(
-  formData: Record<string, any>,
-  id: number,
-) {
+export async function updateFormData(formData: FormData, id: number) {
   // 1. Remove username as you were doing
   const { username, ...rest } = formData;
 

@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect } from "react";
-import { SidebarInset } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -16,13 +15,7 @@ import {
 import Link from "next/link";
 import GeminiResult from "@/components/types/GeminiTypes";
 import { useGetUser } from "@/hooks/userHooks";
-import {
-  useGetUserFormData,
-  useGetUserWithPrediction,
-  useUserAnalysis,
-} from "@/hooks/profileHooks";
-import { getUserGemini, insertAnalysisToDB } from "@/hooks/userGemini";
-import { PredData } from "@/components/types/UserDB";
+import { useUserAnalysis } from "@/hooks/profileHooks";
 
 // 2. TOGGLE THIS TO TEST BOTH STATES
 const isLoading = false;
