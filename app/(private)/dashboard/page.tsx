@@ -140,8 +140,8 @@ export default function Page() {
       <div className="max-w-6xl mx-auto w-full px-4 py-6 md:p-10">
         <header className="mb-8 md:mb-12">
           <SplitText
-            text={`Welcome, ${userDB.username}!`}
-            className="text-3xl md:text-6xl font-black text-blue-950 tracking-tighter"
+            text={`Welcome, ${userDB.username}! 👋`}
+            className="text-4xl md:text-4xl font-black text-blue-950 tracking-tighter"
             delay={40}
             onLetterAnimationComplete={() => {}}
           />
@@ -189,9 +189,12 @@ export default function Page() {
                 .
               </p>
 
-              <Link href="/prediction" className="block w-full sm:w-fit">
-                <Button className="w-full rounded-2xl px-8 py-6 md:py-8 bg-blue-950 text-white font-bold text-base md:text-lg gap-3 shadow-xl shadow-blue-950/20 active:scale-95">
-                  View Full Report <IconArrowRight size={20} />
+              <Link
+                href="/ai-explanation-view"
+                className="block w-full sm:w-fit cursor-pointer"
+              >
+                <Button className="w-full rounded-2xl px-9 cursor-pointerpy-6 md:py-8 bg-blue-950 text-white font-bold text-base md:text-lg gap-3 shadow-xl shadow-blue-950/20 active:scale-95">
+                  View AI Analysis <IconArrowRight size={20} />
                 </Button>
               </Link>
             </div>

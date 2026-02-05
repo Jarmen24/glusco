@@ -21,6 +21,7 @@ import { useGetUser } from "@/hooks/userHooks";
 import { useRouter } from "next/navigation";
 import { AuthContext } from "@/components/context/AuthProvider";
 import GeminiResult from "@/components/types/GeminiTypes";
+import { Loader2 } from "lucide-react";
 
 export type FormData = {
   username: string;
@@ -100,8 +101,22 @@ const INITIAL_DATA: FormData = {
   sleep_alcohol: "",
 };
 
+// --- LOADING OVERLAY COMPONENT ---
+const LoadingOverlay = ({ message }: { message: string }) => (
+  <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
+    <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 text-center max-w-sm mx-4">
+      <Loader2 className="h-12 w-12 text-[#0B1956] animate-spin" />
+      <h3 className="text-xl font-bold text-gray-900">
+        Processing Health Data
+      </h3>
+      <p className="text-gray-500 text-sm">
+        {message}... Please wait while we process your assessment.
+      </p>
+    </div>
+  </div>
+);
+
 const MultiForm = () => {
-  // 1. ALL HOOKS MUST BE AT THE TOP
   const auth = useContext(AuthContext);
   const userDB = useGetUser();
   const router = useRouter();
@@ -111,7 +126,6 @@ const MultiForm = () => {
   const [submitted, setSubmitted] = useState(false);
   const [checkUsername, setCheckUsername] = useState(false);
   const [aiText, setAiText] = useState<GeminiResult | null>(null);
-  const [aiLoading, setAiLoading] = useState(false);
 
   const { handleUpdateUsername, loading: usernameLoading } =
     useUpdateUsername();
@@ -120,12 +134,14 @@ const MultiForm = () => {
   const { handleInsertPrediction, loading: predictionLoading } =
     useInsertPrediction();
 
+  // Combined loading state for the overlay
+  const isGlobalLoading =
+    usernameLoading || formDataLoading || predictionLoading;
+
   function updateFields(fields: Partial<FormData>) {
     setData((prev) => ({ ...prev, ...fields }));
-    console.log(data);
   }
 
-  // Define steps inside the hook call
   const { steps, step, currentStepIndex, isFirstStep, back, next, isLastStep } =
     useMultiStepForm([
       <ClinicalForm key="step1" {...data} updateFields={updateFields} />,
@@ -135,7 +151,6 @@ const MultiForm = () => {
       <FamilyForm key="step5" {...data} updateFields={updateFields} />,
     ]);
 
-  // 2. CONDITIONAL RENDERS MUST HAPPEN AFTER ALL HOOKS
   if (!auth) {
     return (
       <div className="p-10 text-center">
@@ -146,12 +161,9 @@ const MultiForm = () => {
     );
   }
 
-  const { user, loading: authLoading } = auth;
-
+  const { loading: authLoading } = auth;
   if (authLoading)
     return <div className="p-10 text-center">Loading User...</div>;
-
-  // --- Logic Functions ---
 
   const fetchPrediction = async () => {
     try {
@@ -159,27 +171,28 @@ const MultiForm = () => {
 
       const payload = Object.fromEntries(
         Object.entries(data).map(([key, value]) => {
-          // Skip parsing for the array field
-          console.log(key);
           if (key === "exercise_types" || key === "username") {
-            return [key, value]; // Keep as string[]
+            return [key, value];
           }
-
-          // Parse everything else as a float for your ML model
           return [key, parseFloat(value as string) || 0];
         }),
       );
-      console.log(payload);
-      const response = await fetch("http://192.168.100.6:8000/predict", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
+
+      const response = await fetch(
+        "https://predictive-model-diabetes.onrender.com/predict",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        },
+      );
+
       if (response.status === 422) {
         const errorJson = await response.json();
         console.log("VALIDATION ERROR:", errorJson.detail);
-        // This will show you exactly which field (e.g., ["body", "age"]) is the problem.
+        return 0;
       }
+
       const result = await response.json();
 
       if (!response.ok || !userDB) {
@@ -187,7 +200,7 @@ const MultiForm = () => {
         return 0;
       }
 
-      const { predData, error } = await handleInsertPrediction(
+      const { error } = await handleInsertPrediction(
         parseInt(userDB.id),
         result.clinical,
         result.lifestyle,
@@ -211,7 +224,6 @@ const MultiForm = () => {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    // Validation logic per step
     if (currentStepIndex === 0) {
       const required = [
         "username",
@@ -228,7 +240,6 @@ const MultiForm = () => {
         return toast.error("Please fill in all required fields.");
       }
 
-      // Numeric validation
       const nums = [
         "age",
         "height",
@@ -242,7 +253,6 @@ const MultiForm = () => {
         return toast.error("Please enter valid numbers.");
       }
 
-      // Username check
       setCheckUsername(true);
       const { data: exists } = await client
         .from("users")
@@ -269,12 +279,11 @@ const MultiForm = () => {
         return toast.error("Please fill all fields.");
     }
 
-    // Move to next step if not last
     if (!isLastStep) return next();
 
-    // Final Submission Logic
     if (!userDB) return toast.error("User profile not found.");
 
+    // Final Process
     const { error: nameErr } = await handleUpdateUsername(
       data.username,
       userDB.email,
@@ -296,7 +305,18 @@ const MultiForm = () => {
   }
 
   return (
-    <div className="flex items-center justify-center w-full">
+    <div className="flex items-center justify-center w-full relative">
+      {/* FULL SCREEN OVERLAY */}
+      {isGlobalLoading && (
+        <LoadingOverlay
+          message={
+            predictionLoading
+              ? "Generating Health Insights"
+              : "Updating Profile"
+          }
+        />
+      )}
+
       <Card className="w-full max-w-[1000px] p-4 px-6 bg-[#F8F3ED] shadow-none border-0">
         <form onSubmit={handleSubmit}>
           <div className="w-full flex flex-col justify-between items-start">
@@ -312,6 +332,7 @@ const MultiForm = () => {
                 className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
                 onClick={back}
                 type="button"
+                disabled={isGlobalLoading}
               >
                 Back
               </Button>
@@ -321,7 +342,7 @@ const MultiForm = () => {
             <Button
               className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
               type="submit"
-              disabled={checkUsername || usernameLoading || formDataLoading}
+              disabled={checkUsername || isGlobalLoading}
             >
               {checkUsername ? "Validating..." : isLastStep ? "Submit" : "Next"}
             </Button>

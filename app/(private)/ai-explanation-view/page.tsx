@@ -19,6 +19,7 @@ import { useGetUser } from "@/hooks/userHooks";
 import {
   useGetUserFormData,
   useGetUserWithPrediction,
+  useUserAnalysis,
 } from "@/hooks/profileHooks";
 import { getUserGemini, insertAnalysisToDB } from "@/hooks/userGemini";
 import { PredData } from "@/components/types/UserDB";
@@ -28,25 +29,19 @@ const isLoading = false;
 
 export default function AIAnalysisPage() {
   const userDB = useGetUser();
-  const [prediction, setPrediction] = React.useState<PredData>();
-  const [formData, setFormData] = React.useState<FormData>();
+
   const [aiText, setAiText] = React.useState<GeminiResult>();
   const [aiLoading, setAiLoading] = React.useState<boolean>(isLoading);
-  const { fetchUserWithPrediction, loading, error } =
-    useGetUserWithPrediction();
 
   const {
-    fetchUserFormData,
-    loading: formDataLoading,
-    error: formDataError,
-  } = useGetUserFormData();
-
+    fetchAnalysis,
+    loading: analysisLoading,
+    error: analysisError,
+  } = useUserAnalysis();
   const hasRun = React.useRef(false);
   useEffect(() => {
     if (hasRun.current) return;
     const loadData = async () => {
-      // 1. Check if user exists
-      console.log(userDB);
       if (!userDB?.id) {
         console.log("User not logged in");
         return;
@@ -55,45 +50,16 @@ export default function AIAnalysisPage() {
       try {
         setAiLoading(true);
         // 2. Fetch the prediction (which likely includes the AI analysis)
-        const { data: formData, error: formError } = await fetchUserFormData(
-          parseInt(userDB.id),
-        );
 
-        if (!formData || formError) {
-          // Assuming your hook/API returns the AI analysis in the data
-          console.log("Error fetching formData:", formError);
-          return;
-        }
-        setFormData(formData);
-        const { data, error } = await fetchUserWithPrediction(
-          parseInt(userDB.id),
-        );
+        const { data, error } = await fetchAnalysis(parseInt(userDB.id));
 
         if (!data || error) {
           // Assuming your hook/API returns the AI analysis in the data
-          console.log("Error fetching prediction:", error);
+          console.log("Error fetching analysis:", error);
           return;
         }
 
-        const combinedData = {
-          ...formData,
-          ...data,
-        };
-        setPrediction(data);
-        const response = await getUserGemini(combinedData);
-        console.log(response);
-        if (!response) {
-          console.log("Error fetching analysis:", response);
-          return;
-        }
-
-        const insertDB = await insertAnalysisToDB(response, userDB.id);
-        if (!insertDB) {
-          console.log("Error inserting analysis to DB:", insertDB);
-          return;
-        }
-        setAiText(response);
-        console.log(response);
+        setAiText(data);
         setAiLoading(false);
       } catch (err) {
         console.error("Error fetching analysis:", err);
