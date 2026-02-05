@@ -112,7 +112,7 @@ export async function updateFormData(
 
   return await client
     .from("user_formdata")
-    .upsert([{ user_id: id, ...processedData }])
+    .insert([{ user_id: id, ...processedData }])
     .select();
 }
 

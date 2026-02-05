@@ -1,11 +1,18 @@
 // app/layout.tsx
 import "./globals.css";
+import { Montserrat } from "next/font/google";
+
 import { Providers } from "@/components/Providers";
 
 export const metadata = {
   title: "Onboarding",
   description: "Glusco Login and Signup Forms",
 };
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-montserrat", // Use this CSS variable
+});
 
 export default function RootLayout({
   children,
@@ -13,7 +20,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={montserrat.className}>
       <body className="relative min-h-screen">
         {/* Background — server-safe markup */}
         <div className="absolute inset-0 bg-white -z-10">

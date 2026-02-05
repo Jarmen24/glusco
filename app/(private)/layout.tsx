@@ -5,11 +5,16 @@ import { useRouter, usePathname } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { Montserrat } from "next/font/google";
 
 interface PrivatePagesLayoutProps {
   children: React.ReactNode;
 }
-
+const montserrat = Montserrat({
+  subsets: ["latin"],
+  weight: ["400", "700", "900"],
+  variable: "--font-montserrat", // Use this CSS variable
+});
 const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
   children,
 }) => {
@@ -40,6 +45,7 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }
+      className={montserrat.className}
     >
       {/* ✅ Only show sidebar when not on multi-step form */}
       {!hideSidebar && <AppSidebar variant="inset" user={user} />}
