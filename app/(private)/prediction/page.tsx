@@ -11,29 +11,31 @@ import { SyncLoader } from "react-spinners";
 
 const Prediction = () => {
   const userDB = useGetUser();
+
   const [prediction, setPrediction] = useState<number | null>(null);
   const [riskLabel, setRiskLabel] = useState<string>("");
   const [color, setColor] = useState<string>("#0B1956"); // default color
 
-  const { fetchUserWithPrediction, loading, error } = useGetUserWithPrediction(
-    userDB ? parseInt(userDB.id) : 0
-  );
+  const { fetchUserWithPrediction, loading, error } =
+    useGetUserWithPrediction();
 
   const handleLoadPrediction = async () => {
-    if (!userDB) return;
+    console.log(userDB);
+    if (!userDB) return console.log("WALA USER");
 
-    const { data, error } = await fetchUserWithPrediction();
-    if (error) return console.error(error);
+    const { data, error } = await fetchUserWithPrediction(parseInt(userDB.id));
+    console.log(data);
+    if (error) return console.log(error);
 
-    if (data && data.pred && data.pred.length > 0) {
-      const percent = Math.round(data.pred[0].percent);
+    if (data) {
+      const percent = Math.round(data.percent);
       setPrediction(percent);
-
+      console.log("Prediction percent:", percent);
       // Determine risk level and color
-      if (percent < 30) {
+      if (percent < 31) {
         setRiskLabel("Low Risk");
         setColor("#4CAF50"); // green
-      } else if (percent < 70) {
+      } else if (percent < 61) {
         setRiskLabel("Moderate Risk");
         setColor("#FF9800"); // orange
       } else {
@@ -44,7 +46,9 @@ const Prediction = () => {
   };
 
   useEffect(() => {
-    handleLoadPrediction();
+    if (userDB) {
+      handleLoadPrediction();
+    }
   }, [userDB]);
 
   return (
@@ -53,7 +57,7 @@ const Prediction = () => {
         Your Diabetes Risk Result
       </h1>
       <p className="text-white mb-5 text-center">
-        Here's what we found based on your data.
+        {`Here's what we found based on your data.`}
       </p>
 
       <div className="flex flex-col max-w-[400px] p-10 items-center bg-white rounded-3xl mx-5">
@@ -86,8 +90,8 @@ const Prediction = () => {
           sleep for better health.
         </p>
 
-        <Link href="/dashboard">
-          <Button className="mt-5 cursor-pointer">Go to Dashboard</Button>
+        <Link href="/ai-explanation">
+          <Button className="mt-5 cursor-pointer">View AI Explanation</Button>
         </Link>
       </div>
     </div>

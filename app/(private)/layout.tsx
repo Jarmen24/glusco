@@ -20,11 +20,12 @@ const PrivatePagesLayout: React.FC<PrivatePagesLayoutProps> = ({
   // ✅ Check if sidebar should be hidden
   const hideSidebar =
     pathname?.startsWith("/multi-step-form") ||
+    pathname?.startsWith("/ai-explanation") ||
     pathname?.startsWith("/prediction");
 
   useEffect(() => {
     if (!loading && !user) {
-      router.push("/"); // redirect to login or homepage
+      router.push("/onboarding"); // redirect to login or homepage
     }
   }, [user, loading, router]);
 

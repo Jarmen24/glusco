@@ -25,7 +25,7 @@ const profile_images = [
 const Signup = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
+    const formData = new FormData(e.currentTarget);
     const email = formData.get("email").trim();
     const name = formData.get("name").trim();
     const password = formData.get("password").trim();
@@ -87,11 +87,11 @@ const Signup = () => {
         return;
       }
 
-      const save = useSaveUser(
-        email,
-        name,
-        profile_images[Math.floor(Math.random() * 5)]
-      );
+      const save = useSaveUser({
+        email: email,
+        name: name,
+        profile_picture: profile_images[Math.floor(Math.random() * 5)],
+      });
 
       if (!save) {
         toast.error("Failed to sign up");

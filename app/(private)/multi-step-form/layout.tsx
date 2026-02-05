@@ -3,11 +3,6 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
-import { AppSidebar } from "@/components/app-sidebar";
-import { SiteHeader } from "@/components/site-header";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { SyncLoader } from "react-spinners";
-import { useGetUser } from "@/hooks/userHooks";
 
 interface PrivatePagesLayoutProps {
   children: React.ReactNode;

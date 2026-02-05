@@ -1,35 +1,29 @@
-import React, { use, useEffect, useState } from "react";
-
+import { useEffect, useState } from "react";
 import client from "@/app/api/client";
 import { toast } from "sonner";
-import { useGetUser } from "./userHooks";
-interface Forums {
-  id: number;
-  title: string;
-  description: string;
-  likes: number;
-  comment_count: number;
-  user: number;
-  category: string;
-  created_at: string;
-  forum_likes: Forum_Likes[];
-  users: User;
-  comments: Comment[];
-}
 
-interface Forum_Likes {
-  id: number;
-  user: number;
-}
+// --- Interfaces ---
 
-interface User {
+export interface User {
   id: number;
   name: string;
   username: string;
   profile_picture: string;
 }
 
-interface Forum {
+export interface Forum_Likes {
+  id: number;
+  user: number;
+}
+
+export interface Comment {
+  id: number;
+  comment: string;
+  created_at: string;
+  user: User;
+}
+
+export interface Forum {
   id: number;
   title: string;
   description: string;
@@ -43,88 +37,83 @@ interface Forum {
   comments: Comment[];
 }
 
-interface Categories {
+export interface Categories {
   id: number;
   category: string;
 }
 
-interface Comment {
-  id: number;
-  comment: string;
-  created_at: string;
-  user: User;
-}
+// --- Hooks ---
 
-export function getAllForums() {
-  const [forums, setForums] = useState<Forums[]>([]);
+export function useAllForums() {
+  const [forums, setForums] = useState<Forum[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const fetchForums = async () => {
+    setLoading(true);
+    const { data, error } = await client
+      .from("forum")
+      .select(
+        `
+        *, 
+        users (id, name, username, profile_picture), 
+        comments (
+          id,
+          comment,
+          created_at,
+          user (id, name, username, profile_picture)
+        ),
+        forum_likes (id, user)
+      `,
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      toast.error(error.message);
+    } else if (data) {
+      setForums(data);
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    const getAllForums = async () => {
-      const { data, error } = await client
-        .from("forum")
-        .select(
-          `*, users (id, name, username, profile_picture), comments (
-      id,
-      comment,
-      created_at,
-      user (id, name, username, profile_picture)
-    ),
-    forum_likes (id, user)`
-        )
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        toast.error(error.message);
-        return;
-      }
-
-      if (data) {
-        setForums(data);
-        setLoading(false);
-      }
-    };
-    getAllForums();
+    fetchForums();
   }, []);
 
-  return { forums, loading, refetch: getAllForums };
+  return { forums, loading, refetch: fetchForums };
 }
 
 export function useTrendingForums(limit = 5) {
-  const [forums, setForums] = useState<Forums[]>([]);
+  const [forums, setForums] = useState<Forum[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchTrending = async () => {
       setLoading(true);
-      // Supabase query: fetch forums + their related likes
-      const { data, error } = await client.from("forum")
-        .select(`*, users (id, name, username, profile_picture), comments (
-      id,
-      comment,
-      created_at,
-      user (id, name, username, profile_picture)
-    ),
-    forum_likes (id, user)`);
+      const { data, error } = await client.from("forum").select(`
+          *, 
+          users (id, name, username, profile_picture), 
+          comments (
+            id,
+            comment,
+            created_at,
+            user (id, name, username, profile_picture)
+          ),
+          forum_likes (id, user)
+        `);
 
       if (error) {
         toast.error(error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (data) {
-        // Sort by number of likes (forum_likes.length)
+      } else if (data) {
         const sorted = data
           .sort(
             (a, b) =>
-              (b.forum_likes?.length || 0) - (a.forum_likes?.length || 0)
+              (b.forum_likes?.length || 0) - (a.forum_likes?.length || 0),
           )
-          .slice(0, limit); // limit to top N trending
+          .slice(0, limit);
 
         setForums(sorted);
-        setLoading(false);
       }
+      setLoading(false);
     };
 
     fetchTrending();
@@ -138,60 +127,54 @@ export function useGetForum(id: number) {
   const [loading, setLoading] = useState(true);
 
   const getForum = async () => {
+    if (!id) return;
+    setLoading(true);
     const { data, error } = await client
       .from("forum")
       .select(
         `
-    *,
-    users (id, name, username, profile_picture),
-    comments (
-      id,
-      comment,
-      created_at,
-      user (id, name, username, profile_picture)
-    ),
-    forum_likes (id, user)
-    `
+        *,
+        users (id, name, username, profile_picture),
+        comments (
+          id,
+          comment,
+          created_at,
+          user (id, name, username, profile_picture)
+        ),
+        forum_likes (id, user)
+      `,
       )
       .eq("id", id)
-      .order("created_at", { foreignTable: "comments", ascending: false }) // 👈 newest comments first
+      .order("created_at", { foreignTable: "comments", ascending: false })
       .single();
 
     if (error) {
       toast.error(error.message);
-      return;
-    }
-
-    if (data) {
+    } else {
       setForum(data);
-      setLoading(false);
     }
+    setLoading(false);
   };
+
   useEffect(() => {
     getForum();
   }, [id]);
 
   return { forum, loading, refetch: getForum };
 }
+
 export function usePostComment() {
   const [loading, setLoading] = useState(false);
 
   const postComment = async (
     comment: string,
     userID: number | null,
-    forumID: number
+    forumID: number,
   ) => {
     setLoading(true);
-
     const { data, error } = await client
       .from("comments")
-      .insert([
-        {
-          comment,
-          user: userID,
-          forum: forumID,
-        },
-      ])
+      .insert([{ comment, user: userID, forum: forumID }])
       .select("id");
 
     setLoading(false);
@@ -200,7 +183,6 @@ export function usePostComment() {
       toast.error("Error creating comment. Try again.");
       return null;
     }
-
     return data;
   };
 
@@ -211,49 +193,43 @@ export async function createPost(
   title: string,
   content: string,
   category: string,
-  userID: number | null
+  userID: number | null,
 ) {
   const { data, error } = await client
     .from("forum")
-    .insert([
-      {
-        title,
-        description: content,
-        category,
-        user: userID,
-      },
-    ])
+    .insert([{ title, description: content, category, user: userID }])
     .select("id");
 
   if (error || !data) {
     toast.error("Error creating post");
     return null;
   }
-
   return data;
 }
 
-export function getAllCategories() {
+export function useAllCategories() {
   const [categories, setCategories] = useState<Categories[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const getAllCategories = async () => {
+    const fetchCategories = async () => {
       const { data, error } = await client.from("category").select("*");
       if (error) {
         toast.error(error.message);
       } else {
         setCategories(data || []);
       }
+      setLoading(false);
     };
-    getAllCategories();
+    fetchCategories();
   }, []);
 
-  return { categories };
+  return { categories, loading };
 }
+
 export function useLikePost() {
   const toggleLike = async (forumID: number, userID: string | number) => {
     try {
-      // Check if user already liked this post
       const { data: existing } = await client
         .from("forum_likes")
         .select("id")
@@ -262,7 +238,6 @@ export function useLikePost() {
         .maybeSingle();
 
       if (existing) {
-        // Unlike (delete)
         await client
           .from("forum_likes")
           .delete()
@@ -272,21 +247,19 @@ export function useLikePost() {
         toast.success("Like removed");
         return { liked: false };
       } else {
-        // Like (insert)
-        const { error } = await client.from("forum_likes").insert([
-          {
-            forum: forumID,
-            user: userID,
-          },
-        ]);
+        const { error } = await client
+          .from("forum_likes")
+          .insert([{ forum: forumID, user: userID }]);
 
         if (error) throw error;
         toast.success("Post liked!");
         return { liked: true };
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error liking post");
-      return null;
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Error liking post";
+
+      toast.error(errorMessage);
     }
   };
 

@@ -1,14 +1,8 @@
 "use client";
-import React from "react";
+
+import React, { useContext, useState, FormEvent } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import useMultiStepForm from "@/hooks/useMultiStepForm";
 import QuestionForm from "@/components/form/QuestionForm";
 import ClinicalForm from "@/components/form/ClinicalForm";
@@ -16,9 +10,7 @@ import DietForm from "@/components/form/Diet_Form";
 import ExerciseForm from "@/components/form/ExerciseForm";
 import SleepForm from "@/components/form/SleepForm";
 import FamilyForm from "@/components/form/FamilyForm";
-import { FormEvent } from "react";
 import { toast } from "sonner";
-import { StringToBoolean } from "class-variance-authority/types";
 import {
   useInsertPrediction,
   useUpdateFormData,
@@ -26,12 +18,14 @@ import {
 } from "@/hooks/profileHooks";
 import client from "@/app/api/client";
 import { useGetUser } from "@/hooks/userHooks";
+import { useRouter } from "next/navigation";
+import { AuthContext } from "@/components/context/AuthProvider";
+import GeminiResult from "@/components/types/GeminiTypes";
 
-type FormData = {
+export type FormData = {
   username: string;
   age: string;
   gender: string;
-  knowbgl: string;
   height: string;
   weight: string;
   waist: string;
@@ -56,6 +50,7 @@ type FormData = {
   sitting: string;
   main_activity: string;
   mode_of_transpo: string;
+  exercise_types?: string[];
   fh_father: string;
   fh_mother: string;
   fh_sister: string;
@@ -70,7 +65,6 @@ const INITIAL_DATA: FormData = {
   username: "",
   age: "",
   gender: "",
-  knowbgl: "",
   height: "",
   weight: "",
   waist: "",
@@ -90,11 +84,12 @@ const INITIAL_DATA: FormData = {
   softdrink: "",
   weight_concern: "",
   doesExercise: "",
-  exercise_times: "",
-  exercise_duration: "",
+  exercise_times: "4",
+  exercise_duration: "5",
   sitting: "",
   main_activity: "",
   mode_of_transpo: "",
+  exercise_types: [],
   fh_father: "",
   fh_mother: "",
   fh_sister: "",
@@ -106,47 +101,119 @@ const INITIAL_DATA: FormData = {
 };
 
 const MultiForm = () => {
+  // 1. ALL HOOKS MUST BE AT THE TOP
+  const auth = useContext(AuthContext);
   const userDB = useGetUser();
-  const [data, setData] = React.useState(INITIAL_DATA);
-  const [prediction, setPrediction] = React.useState<string | null>(null);
-  const [submitted, setSubmitted] = React.useState(false); // track submission
-  const {
-    handleUpdateUsername,
-    loading: usernameLoading,
-    error,
-  } = useUpdateUsername();
-  const [checkUsername, setCheckUsername] = React.useState(false);
-  const {
-    handleUpdateUserForm,
-    loading: formDataLoading,
-    error: formDataError,
-  } = useUpdateFormData();
-  const {
-    handleInsertPrediction,
-    loading: predictionLoading,
-    error: predictionError,
-  } = useInsertPrediction();
+  const router = useRouter();
+
+  const [data, setData] = useState(INITIAL_DATA);
+  const [prediction, setPrediction] = useState<string | null>(null);
+  const [submitted, setSubmitted] = useState(false);
+  const [checkUsername, setCheckUsername] = useState(false);
+  const [aiText, setAiText] = useState<GeminiResult | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+
+  const { handleUpdateUsername, loading: usernameLoading } =
+    useUpdateUsername();
+  const { handleUpdateUserForm, loading: formDataLoading } =
+    useUpdateFormData();
+  const { handleInsertPrediction, loading: predictionLoading } =
+    useInsertPrediction();
+
   function updateFields(fields: Partial<FormData>) {
-    setData((prev) => {
-      return { ...prev, ...fields };
-    });
+    setData((prev) => ({ ...prev, ...fields }));
+    console.log(data);
   }
 
+  // Define steps inside the hook call
   const { steps, step, currentStepIndex, isFirstStep, back, next, isLastStep } =
     useMultiStepForm([
-      <ClinicalForm {...data} updateFields={updateFields} />,
-      <DietForm {...data} updateFields={updateFields} />,
-      <ExerciseForm {...data} updateFields={updateFields} />,
-      <SleepForm {...data} updateFields={updateFields} />,
-      <FamilyForm {...data} updateFields={updateFields} />,
+      <ClinicalForm key="step1" {...data} updateFields={updateFields} />,
+      <DietForm key="step2" {...data} updateFields={updateFields} />,
+      <ExerciseForm key="step3" {...data} updateFields={updateFields} />,
+      <SleepForm key="step4" {...data} updateFields={updateFields} />,
+      <FamilyForm key="step5" {...data} updateFields={updateFields} />,
     ]);
+
+  // 2. CONDITIONAL RENDERS MUST HAPPEN AFTER ALL HOOKS
+  if (!auth) {
+    return (
+      <div className="p-10 text-center">
+        <p>
+          Auth context not found. Make sure AuthProvider wraps this component.
+        </p>
+      </div>
+    );
+  }
+
+  const { user, loading: authLoading } = auth;
+
+  if (authLoading)
+    return <div className="p-10 text-center">Loading User...</div>;
+
+  // --- Logic Functions ---
+
+  const fetchPrediction = async () => {
+    try {
+      if (!data.height || !data.weight) return 0;
+
+      const payload = Object.fromEntries(
+        Object.entries(data).map(([key, value]) => {
+          // Skip parsing for the array field
+          console.log(key);
+          if (key === "exercise_types" || key === "username") {
+            return [key, value]; // Keep as string[]
+          }
+
+          // Parse everything else as a float for your ML model
+          return [key, parseFloat(value as string) || 0];
+        }),
+      );
+      console.log(payload);
+      const response = await fetch("http://192.168.100.6:8000/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+      if (response.status === 422) {
+        const errorJson = await response.json();
+        console.log("VALIDATION ERROR:", errorJson.detail);
+        // This will show you exactly which field (e.g., ["body", "age"]) is the problem.
+      }
+      const result = await response.json();
+
+      if (!response.ok || !userDB) {
+        console.error("Prediction error or no userDB");
+        return 0;
+      }
+
+      const { predData, error } = await handleInsertPrediction(
+        parseInt(userDB.id),
+        result.clinical,
+        result.lifestyle,
+        result.combined,
+        result.percent,
+      );
+
+      if (error) {
+        console.error("Error inserting prediction:", error);
+        return 0;
+      }
+
+      setPrediction(result.percent);
+      return 1;
+    } catch (err) {
+      console.error("Error fetching prediction:", err);
+      return 0;
+    }
+  };
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    // Step 1 — Only check when on ClinicalForm (first step)
+    // Validation logic per step
     if (currentStepIndex === 0) {
-      const requiredFields = [
+      const required = [
         "username",
         "age",
         "gender",
@@ -157,19 +224,12 @@ const MultiForm = () => {
         "systolic",
         "diastolic",
       ];
-
-      // Check for empty fields
-      const emptyFields = requiredFields.filter(
-        (field) => !data[field as keyof FormData]
-      );
-
-      if (emptyFields.length > 0) {
-        toast.error("Please fill in all required fields before continuing.");
-        return;
+      if (required.some((field) => !data[field as keyof FormData])) {
+        return toast.error("Please fill in all required fields.");
       }
 
-      // Step 2 — Validate numeric fields
-      const numericFields = [
+      // Numeric validation
+      const nums = [
         "age",
         "height",
         "weight",
@@ -178,41 +238,24 @@ const MultiForm = () => {
         "systolic",
         "diastolic",
       ];
-
-      const invalidNumbers = numericFields.filter((field) => {
-        const value = data[field as keyof FormData];
-        return value !== "" && isNaN(Number(value)); // not a valid number
-      });
-
-      if (invalidNumbers.length > 0) {
-        toast.error("Please enter valid numbers only (no letters or symbols).");
-        return;
+      if (nums.some((f) => isNaN(Number(data[f as keyof FormData])))) {
+        return toast.error("Please enter valid numbers.");
       }
 
-      // Validate username
-      try {
-        // 2️⃣ Check if username already exists
-        setCheckUsername(true);
-        const { data: usernameExists, error: usernameError } = await client
-          .from("users")
-          .select("id")
-          .eq("username", data.username.toLowerCase())
-          .maybeSingle();
-        setCheckUsername(false);
-        if (usernameError) throw usernameError;
-        if (usernameExists) {
-          toast.error("Username is already taken.");
-          return;
-        }
-      } catch (error) {
-        toast.error("Username already taken.");
-        return;
-      }
+      // Username check
+      setCheckUsername(true);
+      const { data: exists } = await client
+        .from("users")
+        .select("id")
+        .eq("username", data.username.toLowerCase())
+        .maybeSingle();
+      setCheckUsername(false);
+
+      if (exists) return toast.error("Username is already taken.");
     }
 
-    // Step 2
     if (currentStepIndex === 1) {
-      const requiredFields = [
+      const required = [
         "fruits",
         "vegetables",
         "fried",
@@ -222,169 +265,39 @@ const MultiForm = () => {
         "softdrink",
         "weight_concern",
       ];
-
-      // Check for empty fields
-      const emptyFields = requiredFields.filter(
-        (field) => !data[field as keyof FormData]
-      );
-
-      if (emptyFields.length > 0) {
-        toast.error("Please fill in all required fields before continuing.");
-        return;
-      }
-    }
-    // Step 3
-    if (currentStepIndex === 2) {
-      if (data.doesExercise === "") {
-        toast.error("Please select an option before continuing.");
-        return;
-      }
-      if (data.doesExercise === "1") {
-        const requiredFields = [
-          "doesExercise",
-          "exercise_times",
-          "exercise_duration",
-          "sitting",
-          "main_activity",
-          "mode_of_transpo",
-        ];
-
-        // Check for empty fields
-        const emptyFields = requiredFields.filter(
-          (field) => !data[field as keyof FormData]
-        );
-
-        if (emptyFields.length > 0) {
-          toast.error("Please fill in all required fields before continuing.");
-          return;
-        }
-      }
-
-      if (data.doesExercise === "2") {
-        const requiredFields = ["sitting", "main_activity", "mode_of_transpo"];
-
-        // Check for empty fields
-        const emptyFields = requiredFields.filter(
-          (field) => !data[field as keyof FormData]
-        );
-
-        if (emptyFields.length > 0) {
-          toast.error("Please fill in all required fields before continuing.");
-          return;
-        }
-      }
+      if (required.some((f) => !data[f as keyof FormData]))
+        return toast.error("Please fill all fields.");
     }
 
-    // Step 4
-    if (currentStepIndex === 3) {
-      const requiredFields = [
-        "sleep_hours",
-        "sleep_cigarette",
-        "sleep_alcohol",
-      ];
-
-      // Check for empty fields
-      const emptyFields = requiredFields.filter(
-        (field) => !data[field as keyof FormData]
-      );
-
-      if (emptyFields.length > 0) {
-        toast.error("Please fill in all required fields before continuing.");
-        return;
-      }
-    }
-
-    // Step 5
-    if (currentStepIndex === 4) {
-      const requiredFields = [
-        "fh_father",
-        "fh_mother",
-        "fh_sister",
-        "fh_brother",
-        "fh_extended",
-      ];
-
-      // Check for empty fields
-      const emptyFields = requiredFields.filter(
-        (field) => !data[field as keyof FormData]
-      );
-
-      if (emptyFields.length > 0) {
-        toast.error("Please fill in all required fields before continuing.");
-        return;
-      }
-    }
-
-    // ✅ If all good, move to next step
+    // Move to next step if not last
     if (!isLastStep) return next();
-    // ✅ If last step, show success message
-    // ✅ Last step: submit form and get prediction
-    if (!userDB) return toast.error("User data not loaded yet. Please wait.");
 
-    const { data: userNameData, error: userNameError } =
-      await handleUpdateUsername(data.username, userDB.email);
+    // Final Submission Logic
+    if (!userDB) return toast.error("User profile not found.");
 
-    if (userNameError) return toast.error("Failed to update username.");
-    console.log(userDB);
-    const { dataObject, error: formError } = await handleUpdateUserForm(
-      data,
-      parseInt(userDB.id)
+    const { error: nameErr } = await handleUpdateUsername(
+      data.username,
+      userDB.email,
     );
-    if (formError) return toast.error("Failed to update form data.");
+    if (nameErr) return toast.error("Failed to update username.");
+
+    const { error: formErr } = await handleUpdateUserForm(
+      data,
+      parseInt(userDB.id),
+    );
+    if (formErr) return toast.error("Failed to update form data.");
+
+    const success = await fetchPrediction();
+    if (!success) return toast.error("Failed to get prediction.");
+
     setSubmitted(true);
     toast.success("Form submitted successfully!");
+    router.push("/prediction");
   }
 
-  React.useEffect(() => {
-    if (!submitted) return;
-
-    const fetchPrediction = async () => {
-      try {
-        const floatData = Object.fromEntries(
-          Object.entries(data).map(([key, value]) => [
-            key,
-            parseFloat(value) || 0, // convert to float, default 0
-          ])
-        );
-
-        // Now send this in your fetch or axios request
-        const response = await fetch("http://127.0.0.1:8000/predict", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(floatData),
-        });
-
-        const result = await response.json();
-
-        if (!response.ok) {
-          console.error("❌ Server responded with error:", result);
-          throw new Error(result.error || "Unknown backend error");
-        }
-        if (!userDB)
-          return toast.error("User data not loaded yet. Please wait.");
-
-        const { predData, error } = await handleInsertPrediction(
-          parseInt(userDB.id),
-          result.clinical,
-          result.lifestyle,
-          result.combined,
-          result.percent
-        );
-
-        if (error) return toast.error("Failed to insert prediction.");
-        setPrediction(result.probability);
-      } catch (error) {
-        console.error("🚨 Error fetching prediction:", error);
-        setPrediction("Error fetching prediction");
-      }
-    };
-
-    fetchPrediction();
-  }, [submitted, data]);
-
   return (
-    <div className=" flex items-center justify-center w-full">
-      <Card className="w-full max-w-[1000px] p-4 px-6 bg-[#F8F3ED] shadow-none outline-none border-0">
+    <div className="flex items-center justify-center w-full">
+      <Card className="w-full max-w-[1000px] p-4 px-6 bg-[#F8F3ED] shadow-none border-0">
         <form onSubmit={handleSubmit}>
           <div className="w-full flex flex-col justify-between items-start">
             <p className="font-bold lg:text-lg text-sm bg-blue-950 lg:px-5 py-2 px-2 rounded-2xl text-white shrink-0">
@@ -392,6 +305,7 @@ const MultiForm = () => {
             </p>
             <div className="w-full">{step}</div>
           </div>
+
           <div className="flex justify-between items-center mt-3">
             {!isFirstStep ? (
               <Button
@@ -402,13 +316,14 @@ const MultiForm = () => {
                 Back
               </Button>
             ) : (
-              <div></div>
+              <div />
             )}
             <Button
               className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
               type="submit"
+              disabled={checkUsername || usernameLoading || formDataLoading}
             >
-              {checkUsername ? "Validating" : isLastStep ? "Submit" : "Next"}
+              {checkUsername ? "Validating..." : isLastStep ? "Submit" : "Next"}
             </Button>
           </div>
         </form>

@@ -1,14 +1,7 @@
-import React, { useState } from "react";
+import React from "react";
 import { Label } from "../ui/label";
-import { Input } from "../ui/input";
+
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import QuestionForm from "./QuestionForm";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "../ui/input-group";
-import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
 type SleepFormProps = {
   sleep_hours: string;
@@ -85,11 +78,11 @@ const SleepForm: React.FC<SleepFormProps> = ({
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="3" id="cigarette-3" />
-              <Label htmlFor="3">Regularly</Label>
+              <Label htmlFor="4">Regularly</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="4" id="cigarette-4" />
-              <Label htmlFor="4">Former Smoker</Label>
+              <Label htmlFor="3">Former Smoker</Label>
             </div>
           </RadioGroup>
         </div>

@@ -1,222 +1,236 @@
 "use client";
 
+import React, { useEffect, useState } from "react";
 import client from "@/app/api/client";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
 import SplitText from "@/components/SplitText";
-
 import {
-  IconArrowBigRightFilled,
+  IconArrowRight,
   IconDropletFilled,
   IconDropletsFilled,
   IconScaleOutline,
   IconStethoscope,
 } from "@tabler/icons-react";
-
-import React, { useContext, useEffect, useState } from "react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
-import { User } from "@supabase/supabase-js";
-import { useSaveUser } from "@/hooks/useSaveUser";
-import useAuth from "@/hooks/useAuth";
-import { AuthContext } from "@/components/context/AuthProvider";
 import { useGetUser } from "@/hooks/userHooks";
 import { useGetUserWithPrediction } from "@/hooks/profileHooks";
 import { SyncLoader } from "react-spinners";
+import Link from "next/link";
+import { PredData } from "@/components/types/UserDB";
+import { FormData } from "@/app/(private)/multi-step-form/page";
+
+// Interface for form data
+
+// Helper function to fetch latest form data
+export async function getLatestUserFormData(id: number) {
+  return await client
+    .from("user_formdata")
+    .select("*")
+    .eq("user_id", id)
+    .order("inserted_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+}
 
 export default function Page() {
   const userDB = useGetUser();
-  console.log(userDB);
-  const user = useContext(AuthContext);
-  const [prediction, setPrediction] = useState<number | null>(null);
-  const [riskLabel, setRiskLabel] = useState<string>("");
-  const [color, setColor] = useState<string>("#0B1956"); // default color
+  const [predictionData, setPredictionData] = useState<PredData | null>(null);
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [riskConfig, setRiskConfig] = useState({
+    label: "Calculating...",
+    color: "#0B1956",
+  });
 
-  const { fetchUserWithPrediction, loading, error } = useGetUserWithPrediction(
-    userDB ? parseInt(userDB.id) : 0
-  );
+  const { fetchUserWithPrediction, loading: predictionLoading } =
+    useGetUserWithPrediction();
+  const [isLocalLoading, setIsLocalLoading] = useState(true);
 
   useEffect(() => {
-    const syncUser = async () => {
-      const {
-        data: { user },
-      } = await client.auth.getUser();
-      if (!user) return;
+    const loadAllData = async () => {
+      // Only run if we have a valid user ID
+      if (!userDB?.id) return;
 
-      const { data: existingUser } = await client
-        .from("users")
-        .select("id")
-        .eq("email", user.email)
-        .maybeSingle();
+      setIsLocalLoading(true);
+      const userId = parseInt(userDB.id);
 
-      if (!existingUser) {
-        await useSaveUser(
-          user.user_metadata.email,
-          user.user_metadata.full_name,
-          user.user_metadata.email.split("@")[0],
-          user.user_metadata.avatar_url
-        );
+      try {
+        const [predRes, formRes] = await Promise.all([
+          fetchUserWithPrediction(userId),
+          getLatestUserFormData(userId),
+        ]);
+
+        if (predRes?.data) {
+          setPredictionData(predRes.data);
+          const percent = Math.round(predRes.data.percent);
+          if (percent < 30)
+            setRiskConfig({ label: "Low Risk", color: "#22c55e" });
+          else if (percent < 70)
+            setRiskConfig({ label: "Moderate Risk", color: "#f59e0b" });
+          else setRiskConfig({ label: "High Risk", color: "#ef4444" });
+        }
+
+        if (formRes?.data) {
+          console.log(formRes);
+          setFormData(formRes.data);
+        }
+      } catch (err) {
+        console.error("Dashboard data load error:", err);
+      } finally {
+        setIsLocalLoading(false);
       }
     };
 
-    syncUser();
-  }, []);
-  const handleLoadPrediction = async () => {
-    if (!userDB) return;
+    loadAllData();
+    // Dependency on userDB.id specifically to prevent infinite loops
+  }, [userDB?.id]);
 
-    const { data, error } = await fetchUserWithPrediction();
-    if (error) return console.error(error);
+  // Combined loading state
+  // Combined loading state
+  if (isLocalLoading || predictionLoading || !userDB) {
+    return (
+      <div className="fixed inset-0 flex flex-col justify-center items-center bg-white z-50">
+        <SyncLoader color="#0B1956" size={15} margin={5} />
+        <p className="mt-4 text-[#0B1956] font-bold animate-pulse uppercase tracking-widest text-xs">
+          Loading Dashboard...
+        </p>
+      </div>
+    );
+  }
 
-    if (data && data.pred && data.pred.length > 0) {
-      const percent = Math.round(data.pred[0].percent);
-      setPrediction(percent);
+  // Stat Card Component
+  const StatCard = ({
+    title,
+    value,
+    unit,
+    icon: Icon,
+    colorClass,
+  }: {
+    title: string;
+    value: string | number | null | undefined;
+    unit: string;
+    icon: React.ElementType;
+    colorClass: string;
+  }) => (
+    <Card className="bg-white border border-slate-100 rounded-[2rem] p-4 md:p-6 shadow-sm flex flex-col items-center text-center gap-2 active:scale-95 transition-transform">
+      <div className={`p-3 md:p-4 rounded-2xl ${colorClass} bg-opacity-10`}>
+        <Icon size={24} className={colorClass.replace("bg-", "text-")} />
+      </div>
+      <div>
+        <p className="text-slate-400 text-[10px] md:text-xs font-bold uppercase tracking-widest leading-none mb-1">
+          {title}
+        </p>
+        <h2 className="text-lg md:text-2xl font-black text-blue-950">
+          {value ?? "--"}
+          <span className="text-[10px] ml-0.5 text-slate-400 uppercase">
+            {unit}
+          </span>
+        </h2>
+      </div>
+    </Card>
+  );
 
-      // Determine risk level and color
-      if (percent < 30) {
-        setRiskLabel("Low Risk");
-        setColor("#4CAF50"); // green
-      } else if (percent < 70) {
-        setRiskLabel("Moderate Risk");
-        setColor("#FF9800"); // orange
-      } else {
-        setRiskLabel("High Risk");
-        setColor("#F44336"); // red
-      }
-    }
-  };
-
-  useEffect(() => {
-    handleLoadPrediction();
-  }, [userDB]);
-
-  const handleAnimationComplete = () => {
-    console.log("All letters have animated!");
-  };
   return (
-    <>
-      <SidebarInset>
-        <SiteHeader title="Dashboard" />
-        <div className="px-5">
-          <div className="lg:p-4 p-3">
-            {userDB ? (
-              <SplitText
-                text={`Welcome back, ${userDB?.username}! 👋`}
-                className="font-bold lg:text-4xl md:text-3xl text-2xl text-primary p-4 pl-0"
-                delay={100}
-                duration={0.6}
-                ease="power3.out"
-                splitType="chars"
-                from={{ opacity: 0, y: 40 }}
-                to={{ opacity: 1, y: 0 }}
-                threshold={0.1}
-                rootMargin="-100px"
-                textAlign="start"
-                onLetterAnimationComplete={handleAnimationComplete}
+    <SidebarInset className="bg-white">
+      <SiteHeader title="Dashboard" />
+
+      <div className="max-w-6xl mx-auto w-full px-4 py-6 md:p-10">
+        <header className="mb-8 md:mb-12">
+          <SplitText
+            text={`Welcome, ${userDB.username}!`}
+            className="text-3xl md:text-6xl font-black text-blue-950 tracking-tighter"
+            delay={40}
+            onLetterAnimationComplete={() => {}}
+          />
+          <div className="h-1 w-12 bg-blue-950 rounded-full mt-2" />
+        </header>
+
+        <div className="space-y-6 md:space-y-8">
+          <Card className="bg-[#F8F9FA] border-none rounded-[2.5rem] md:rounded-[3.5rem] p-6 md:p-12 flex flex-col lg:flex-row items-center gap-8 md:gap-12">
+            <div className="w-48 h-48 md:w-64 md:h-64 flex-shrink-0 bg-white p-5 md:p-6 rounded-[2.5rem] md:rounded-[3rem] shadow-xl shadow-slate-200/50">
+              <CircularProgressbar
+                value={predictionData?.percent || 0}
+                text={`${Math.round(predictionData?.percent || 0)}%`}
+                strokeWidth={10}
+                styles={buildStyles({
+                  textSize: "16px",
+                  textColor: "#0B1956",
+                  pathColor: riskConfig.color,
+                  trailColor: "#F1F5F9",
+                  strokeLinecap: "round",
+                })}
               />
-            ) : null}
-
-            <p className="text-slate-600 pt-3">
-              Here’s your current health summary based on your latest analysis.
-            </p>
-          </div>
-          <div className="@container/main flex justify-center w-full gap-2 lg:mt-4 md:mt-5 mt-3">
-            <div className="grid grid-cols-1 xl:grid-cols-2 gap-10 w-full">
-              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr] items-center justify-center gap-10 col-span-1">
-                {/* Left side: fixed width for circular progress */}
-                <div className="h-40 w-40">
-                  {loading || prediction === null ? (
-                    <div className="flex items-center justify-center h-full">
-                      <SyncLoader color={color} />
-                    </div>
-                  ) : (
-                    <CircularProgressbar
-                      value={prediction}
-                      text={`${prediction}%`}
-                      strokeWidth={15}
-                      styles={buildStyles({
-                        textSize: "20px",
-                        textColor: color,
-                        pathColor: color,
-                        trailColor: "#E0E0E0",
-                      })}
-                    />
-                  )}
-                </div>
-
-                {/* Right side: fills remaining space */}
-                <div className="w-full">
-                  <p className="lg:text-lg md:text-md">
-                    Your current risk level:
-                  </p>
-                  <h1
-                    className="font-bold text-4xl lg:text-5xl"
-                    style={{ color: color }}
-                  >
-                    {riskLabel}
-                  </h1>
-                  <Button className="mt-4 cursor-pointer">
-                    <IconArrowBigRightFilled />
-                    View my Prediction Summary
-                  </Button>
-                </div>
-              </div>
-
-              <div className="col-span-1 gap-3 grid grid-cols-2 md:grid-cols-4">
-                <Card className="w-full bg-primary px-4 relative overflow-hidden rounded-2xl">
-                  <div className="bg-purple-100 lg:p-3 p-2 rounded-full flex absolute lg:top-4 lg:right-4 top-2 right-2">
-                    <IconStethoscope size={20} className="" />
-                  </div>
-                  <div className="justify-end flex flex-col gap-2 h-full">
-                    <h1 className="text-slate-300 font-semibold text-sm lg:text-md">
-                      Blood Pressure
-                    </h1>
-                    <h1 className="text-slate-100 font-bold text-3xl">
-                      120/80
-                    </h1>
-                  </div>
-                </Card>
-                <Card className="w-full bg-primary px-4 relative overflow-hidden rounded-2xl">
-                  <div className="bg-purple-100 lg:p-3 p-2 rounded-full flex absolute lg:top-4 lg:right-4 top-2 right-2">
-                    <IconScaleOutline size={20} className="" />
-                  </div>
-                  <div className="justify-end flex flex-col gap-2 h-full">
-                    <h1 className="text-slate-300 font-semibold text-sm lg:text-md">
-                      BMI
-                    </h1>
-                    <h1 className="text-slate-100 font-bold text-3xl">120</h1>
-                  </div>
-                </Card>
-                <Card className="w-full bg-primary px-4 relative overflow-hidden rounded-2xl">
-                  <div className="bg-purple-100 lg:p-3 p-2 rounded-full flex absolute lg:top-4 lg:right-4 top-2 right-2">
-                    <IconDropletFilled size={20} />
-                  </div>
-                  <div className="justify-end flex flex-col gap-2 h-full">
-                    <h1 className="text-slate-300 font-semibold text-sm lg:text-md">
-                      HbA1C
-                    </h1>
-                    <h1 className="text-slate-100 font-bold text-3xl">18</h1>
-                  </div>
-                </Card>
-                <Card className="w-full bg-primary px-4 relative overflow-hidden rounded-2xl">
-                  <div className="bg-purple-100 lg:p-3 p-2 rounded-full flex absolute lg:top-4 lg:right-4 top-2 right-2">
-                    <IconDropletsFilled size={20} className="" />
-                  </div>
-                  <div className="justify-end flex flex-col gap-2 h-full">
-                    <h1 className="text-slate-300 font-semibold text-sm lg:text-md">
-                      FBS
-                    </h1>
-                    <h1 className="text-slate-100 font-bold text-3xl">
-                      169.80
-                    </h1>
-                  </div>
-                </Card>
-              </div>
             </div>
+
+            <div className="flex-1 text-center lg:text-left space-y-4 md:space-y-6">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white border border-slate-200 text-slate-500 text-[10px] md:text-xs font-bold uppercase tracking-widest mx-auto lg:mx-0">
+                <div
+                  className="w-2 h-2 rounded-full"
+                  style={{ backgroundColor: riskConfig.color }}
+                />
+                Latest Analysis
+              </div>
+
+              <h1
+                className="text-4xl md:text-7xl font-black tracking-tighter"
+                style={{ color: riskConfig.color }}
+              >
+                {riskConfig.label}
+              </h1>
+
+              <p className="text-slate-500 font-medium text-sm md:text-lg leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Your health data indicates a{" "}
+                <span className="text-blue-950 font-bold">
+                  {riskConfig.label.toLowerCase()}
+                </span>
+                .
+              </p>
+
+              <Link href="/prediction" className="block w-full sm:w-fit">
+                <Button className="w-full rounded-2xl px-8 py-6 md:py-8 bg-blue-950 text-white font-bold text-base md:text-lg gap-3 shadow-xl shadow-blue-950/20 active:scale-95">
+                  View Full Report <IconArrowRight size={20} />
+                </Button>
+              </Link>
+            </div>
+          </Card>
+
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-6">
+            <StatCard
+              title="Blood Pressure"
+              value={
+                formData ? `${formData.systolic}/${formData.diastolic}` : "--"
+              }
+              unit="mmHg"
+              icon={IconStethoscope}
+              colorClass="bg-blue-500"
+            />
+            <StatCard
+              title="Cholesterol"
+              value={formData ? `${formData.cholesterol}` : "--"}
+              unit="mg/dL"
+              icon={IconScaleOutline}
+              colorClass="bg-purple-500"
+            />
+            <StatCard
+              title="HbA1C"
+              value={formData?.hba1c}
+              unit="%"
+              icon={IconDropletFilled}
+              colorClass="bg-rose-500"
+            />
+            <StatCard
+              title="FBS Glucose"
+              value={formData?.fbs}
+              unit="mg/dL"
+              icon={IconDropletsFilled}
+              colorClass="bg-orange-500"
+            />
           </div>
         </div>
-      </SidebarInset>
-    </>
+      </div>
+    </SidebarInset>
   );
 }

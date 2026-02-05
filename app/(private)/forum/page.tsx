@@ -2,7 +2,7 @@
 
 import { SiteHeader } from "@/components/site-header";
 import { Input } from "@/components/ui/input";
-import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarInset } from "@/components/ui/sidebar";
 import {
   Dialog,
   DialogContent,
@@ -12,25 +12,29 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import React, { useEffect, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { IconHeart, IconMessageCircle } from "@tabler/icons-react";
+import {
+  IconHeart,
+  IconMessageCircle,
+  IconSearch,
+  IconPlus,
+  IconX,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import {
   createPost,
-  getAllCategories,
-  getAllForums,
+  useAllCategories,
+  useAllForums,
   useTrendingForums,
 } from "@/hooks/forumHooks";
-import { int, number, string } from "zod";
 import { Label } from "@/components/ui/label";
 import { DialogClose } from "@radix-ui/react-dialog";
 import {
@@ -41,265 +45,312 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import client from "@/app/api/client";
 import { useGetUser } from "@/hooks/userHooks";
 import useAuth from "@/hooks/useAuth";
 import { SyncLoader } from "react-spinners";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 export default function Page() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const userDB = useGetUser();
-  const { forums, loading: forumLoading } = getAllForums();
-  const [category, setCategory] = useState("");
-  const { categories } = getAllCategories();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const { forums, loading: forumLoading } = useAllForums();
+  const { categories } = useAllCategories();
   const { forums: trendingForums, loading: trendingLoading } =
     useTrendingForums(10);
+
+  // States matching React Native logic
+  const [activeTab, setActiveTab] = useState("Popular");
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [categoryForm, setCategoryForm] = useState("");
+
+  // --- FILTERING LOGIC ---
+  const filteredPosts = useMemo(() => {
+    if (!userDB?.id) return [];
+    let posts = Array.isArray(forums) ? forums : [];
+
+    if (activeTab === "My Posts") {
+      posts = posts.filter(
+        (post) => String(post.users?.id) === String(userDB?.id),
+      );
+    }
+
+    if (selectedCategory !== "All") {
+      posts = posts.filter((post) => post.category === selectedCategory);
+    }
+
+    if (searchQuery.trim().length > 0) {
+      const query = searchQuery.toLowerCase();
+      posts = posts.filter(
+        (post) =>
+          post.title?.toLowerCase().includes(query) ||
+          post.description?.toLowerCase().includes(query) ||
+          post.category?.toLowerCase().includes(query),
+      );
+    }
+    return posts;
+  }, [forums, activeTab, selectedCategory, userDB, searchQuery]);
+
   const submitPost = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    ///const formData = new FormData(e.target);
     const formData = new FormData(e.currentTarget);
     const title = formData.get("title");
     const content = formData.get("content");
-    const categoryform = category;
 
-    if (!title || !content || !categoryform) {
+    if (!title || !content || !categoryForm) {
+      toast.error("Please fill in all fields");
       return;
     }
-
-    if (!user) {
-      toast.error("You must be logged in to create a post.");
-      return;
-    }
-    if (!userDB || !userDB.id) {
-      toast.error("User data not loaded yet. Please wait.");
-      return;
-    }
-
+    if (!userDB?.id) return [];
     const post = await createPost(
       title.toString(),
       content.toString(),
-      categoryform.toString(),
-      parseInt(userDB.id)
+      categoryForm,
+      parseInt(userDB.id),
     );
+
     if (post) {
       toast.success("Post created successfully!");
-      setIsDialogOpen(false); // ✅ Close modal
+      setIsDialogOpen(false);
       window.location.reload();
     }
   };
 
   return (
-    <>
-      <SidebarInset>
-        <SiteHeader title="Forum" />
-        <div className="flex flex-1 flex-col">
-          <div className="lg:px-5 px-2">
-            <div className="lg:p-4 p-3">
-              <div className="flex items-center justify-center mb-2 gap-2">
-                <Input
-                  type="text"
-                  placeholder="Search"
-                  className="text-sm sm:text-xs"
-                ></Input>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className="cursor-pointer bg-primary text-white hover:bg-primary/80 hover:text-white"
-                    >
-                      <span className="hidden sm:inline">
-                        Start New Discussion
-                      </span>
-                      <span className="inline sm:hidden">+</span>
-                    </Button>
-                  </DialogTrigger>
+    <SidebarInset className="bg-white">
+      <SiteHeader title="Forum" />
 
-                  <DialogContent className="sm:max-w-[700px]">
-                    <form onSubmit={submitPost}>
-                      <DialogHeader>
-                        <DialogTitle>Create Post</DialogTitle>
-                        <DialogDescription>
-                          Start a new discussion with the community.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="grid gap-4">
-                        <div className="grid gap-3">
-                          <Label htmlFor="title">Title</Label>
-                          <Input
-                            id="title"
-                            name="title"
-                            placeholder="Your title here"
-                          />
-                        </div>
-                        <div className="grid gap-3">
-                          <Label>Category</Label>
-                          <Select onValueChange={(value) => setCategory(value)}>
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Choose category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {categories &&
-                                categories.map((category) => {
-                                  return (
-                                    <SelectItem
-                                      key={category.id}
-                                      value={category.category}
-                                    >
-                                      {category.category}
-                                    </SelectItem>
-                                  );
-                                })}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="grid gap-3">
-                          <Label htmlFor="content">Content</Label>
-                          <textarea
-                            id="content"
-                            name="content"
-                            className="outline border rounded-md p-2 focus:outline-none focus:ring-2 "
-                            placeholder="Your content here"
-                            rows={7}
-                          />
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <DialogClose asChild>
-                          <Button variant="outline" className="cursor-pointer">
-                            Cancel
-                          </Button>
-                        </DialogClose>
-                        <Button type="submit" className="cursor-pointer">
-                          Save changes
-                        </Button>
-                      </DialogFooter>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-              </div>
-              <div className="w-full justify-start items-start flex flex-col bg-slate-200 rounded-md lg:p-6 p-3">
-                <h1 className="font-bold lg:text-6xl md:text-3xl text-2xl text-primary">
-                  Forum 📰
-                </h1>
-                <p className="text-slate-600 pt-3">
-                  Search trending topics and join the discussion.
-                </p>
-              </div>
-              {forumLoading ? (
-                // 🌀 Show loader when loading
-                <div className="flex justify-center items-center py-20">
-                  <SyncLoader color="#0B1956" size={12} />
-                </div>
-              ) : forums.length > 0 ? (
-                // ✅ Forums loaded successfully
-                <div className="flex gap-2 mt-2">
-                  <div className="flex flex-col lg:w-3/4 w-full gap-2">
-                    {forums.map((forum) => (
-                      <Link href={`/forum/${forum.id}`} key={forum.id}>
-                        <Card className="w-full hover:bg-slate-100 transition ease-in-out duration-300 px-3 py-3 pt-5 gap-2">
-                          <CardHeader className="flex gap-4 items-start relative px-3 lg:px-6 pb-0">
-                            <img
-                              src={forum.users.profile_picture}
-                              className="rounded-full size-15"
-                            />
-                            <div className="flex-auto min-w-0">
-                              <CardTitle className="mb-2 flex flex-col gap-1 wrap-break-word">
-                                <Badge className="bg-primary font-semibold lg:text-sm md:text-[12px] text-[10px]">
-                                  {forum.category}
-                                </Badge>
-                                <span className="sm:line-clamp-2 text-base leading-tight sm:whitespace-normal sm:wrap-break-word font-semibold">
-                                  {forum.title}
-                                </span>
-                                <span className="text-xs opacity-50">
-                                  {forum.users.name}
-                                </span>
-                              </CardTitle>
-                              <CardDescription className="lg:text-sm text-xs text-slate-600 wrap-break-word whitespace-pre-wrap">
-                                <p className="line-clamp-2 wrap-break-word whitespace-pre-wrap">
-                                  {forum.description}
-                                </p>
-                              </CardDescription>
-                            </div>
-                          </CardHeader>
-                          <CardFooter className="flex justify-end gap-4 px-6 text-sm text-slate-500">
-                            <div className="flex items-center">
-                              <IconMessageCircle className="mr-1 text-primary size-5" />
-                              <span>{forum.comments.length ?? 0}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <IconHeart className="mr-1 text-primary size-5" />
-                              <span>{forum.forum_likes.length ?? 0}</span>
-                            </div>
-                          </CardFooter>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                  <div className="hidden lg:flex lg:w-1/3 flex-col gap-2">
-                    <div>
-                      <div className="w-full justify-start items-start flex flex-col bg-slate-200 rounded-md lg:p-3 p-3">
-                        <h1 className="font-bold text-primary">
-                          Trending Posts
-                        </h1>
-                      </div>
-                    </div>
-                    {trendingForums.map((forum) => (
-                      <Link href={`/forum/${forum.id}`} key={forum.id}>
-                        <Card className="w-full hover:bg-slate-100 transition ease-in-out duration-300 px-3 py-3 pt-5 gap-2">
-                          <CardHeader className="flex gap-4 items-start relative px-3 lg:px-2 pb-0">
-                            <img
-                              src={forum.users.profile_picture}
-                              className="rounded-full size-15"
-                            />
-                            <div className="flex-auto min-w-0">
-                              <CardTitle className="mb-2 flex flex-col gap-1 wrap-break-word">
-                                <Badge className="bg-primary font-semibold lg:text-sm md:text-[12px] text-[10px]">
-                                  {forum.category}
-                                </Badge>
-                                <span className="sm:line-clamp-2 text-base leading-tight sm:whitespace-normal sm:wrap-break-word font-semibold">
-                                  {forum.title}
-                                </span>
-                                <span className="text-xs opacity-50">
-                                  {forum.users.name}
-                                </span>
-                              </CardTitle>
-                              <CardDescription className="lg:text-sm text-xs text-slate-600 wrap-break-word whitespace-pre-wrap">
-                                <p className="line-clamp-2 wrap-break-word whitespace-pre-wrap">
-                                  {forum.description}
-                                </p>
-                              </CardDescription>
-                            </div>
-                          </CardHeader>
-                          <CardFooter className="flex justify-end gap-4 px-6 text-sm text-slate-500">
-                            <div className="flex items-center">
-                              <IconMessageCircle className="mr-1 text-primary size-5" />
-                              <span>{forum.comments.length ?? 0}</span>
-                            </div>
-                            <div className="flex items-center">
-                              <IconHeart className="mr-1 text-primary size-5" />
-                              <span>{forum.forum_likes.length ?? 0}</span>
-                            </div>
-                          </CardFooter>
-                        </Card>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                // ❌ No forums found
-                <div className="flex justify-center items-center py-9">
-                  <h1 className="font-bold text-lg text-slate-600 flex flex-col gap-3 justify-center items-center">
-                    <img src="/noforum.svg" className="size-45" />
-                    No forums found. Start posting today.
-                  </h1>
-                </div>
-              )}
-            </div>
+      <div className="max-w-7xl mx-auto w-full px-4 py-4 space-y-6">
+        {/* --- TOP SECTION (Search & Categories) --- */}
+        <div className="space-y-4">
+          <div className="flex items-center bg-[#F3F4F6] rounded-xl px-3 h-12 gap-2 w-full">
+            <IconSearch size={20} className="text-[#A1A8B0]" />
+            <input
+              className="bg-transparent flex-1 outline-none text-sm placeholder-[#A1A8B0]"
+              placeholder="Search topics..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+            {searchQuery.length > 0 && (
+              <button onClick={() => setSearchQuery("")}>
+                <IconX size={18} className="text-[#A1A8B0]" />
+              </button>
+            )}
+          </div>
+
+          <div className="flex gap-3">
+            {["Popular", "My Posts"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-6 py-2 rounded-full text-sm font-semibold transition ${
+                  activeTab === tab
+                    ? "bg-[#0B1956] text-white"
+                    : "bg-[#F3F4F6] text-[#666]"
+                }`}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex overflow-x-auto pb-2 gap-2 no-scrollbar">
+            {["All", ...(categories?.map((c) => c.category) || [])].map(
+              (cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-medium border transition ${
+                    selectedCategory === cat
+                      ? "bg-[#EEF2FF] border-[#4338CA] text-[#4338CA] font-bold"
+                      : "bg-white border-[#E5E7EB] text-[#6B7280]"
+                  }`}
+                >
+                  {cat}
+                </button>
+              ),
+            )}
           </div>
         </div>
-      </SidebarInset>
-    </>
+
+        {/* --- MAIN CONTENT LAYOUT --- */}
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left Column: Feed */}
+          <div className="flex-1 space-y-4">
+            {forumLoading ? (
+              <div className="flex justify-center py-20">
+                <SyncLoader color="#0B1956" size={12} />
+              </div>
+            ) : filteredPosts.length > 0 ? (
+              filteredPosts.map((item) => (
+                <Link href={`/forum/${item.id}`} key={item.id}>
+                  <Card className="hover:bg-slate-50 transition border-[#F3F4F6] shadow-sm rounded-2xl p-4 mb-4 gap-3">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Image
+                        src={
+                          item.users?.profile_picture || "/default-avatar.png"
+                        }
+                        alt="User"
+                        width={40}
+                        height={40}
+                        className="rounded-full object-cover w-10 h-10"
+                      />
+                      <div>
+                        <p className="text-sm font-bold text-[#333]">
+                          {item.users?.username}
+                        </p>
+                        <Badge className="bg-[#EEF2FF] text-[#4338CA] hover:bg-[#EEF2FF] text-[10px] uppercase font-extrabold px-2 py-0 border-none">
+                          {item.category}
+                        </Badge>
+                      </div>
+                    </div>
+                    <h3 className="text-lg font-bold text-[#0B1956] mb-1">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-[#4B5563] line-clamp-2 leading-relaxed">
+                      {item.description}
+                    </p>
+                    <CardFooter className="flex justify-end p-0 mt-4 gap-4 text-[#666]">
+                      <div className="flex items-center gap-1">
+                        <IconHeart size={16} />
+                        <span className="text-xs">
+                          {item.forum_likes?.length || 0}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <IconMessageCircle size={16} />
+                        <span className="text-xs">
+                          {item.comments?.length || 0}
+                        </span>
+                      </div>
+                    </CardFooter>
+                  </Card>
+                </Link>
+              ))
+            ) : (
+              <div className="flex flex-col items-center py-20 opacity-40">
+                <Image
+                  src="/noforum.svg"
+                  alt="Empty"
+                  width={180}
+                  height={180}
+                />
+                <p className="mt-4 text-[#A1A8B0]">No posts found</p>
+              </div>
+            )}
+          </div>
+
+          {/* Right Column: Trending (Restored) */}
+          <div className="hidden lg:block lg:w-[350px] space-y-4">
+            <div className="bg-[#F3F4F6] p-4 rounded-xl">
+              <h2 className="font-bold text-[#0B1956] text-lg">
+                Trending Posts 📰
+              </h2>
+            </div>
+
+            {trendingLoading ? (
+              <div className="flex justify-center py-10">
+                <SyncLoader color="#0B1956" size={8} />
+              </div>
+            ) : (
+              trendingForums.map((forum) => (
+                <Link href={`/forum/${forum.id}`} key={forum.id}>
+                  <Card className="hover:bg-slate-50 transition border-[#F3F4F6] shadow-sm rounded-xl p-3 mb-3">
+                    <div className="flex gap-3">
+                      <Image
+                        src={forum.users?.profile_picture}
+                        alt="User"
+                        width={32}
+                        height={32}
+                        className="rounded-full size-8 object-cover"
+                      />
+                      <div className="min-w-0 flex flex-col">
+                        <Badge className="bg-[#EEF2FF] text-[#4338CA] text-[9px] font-bold px-1.5 py-0 mb-1 border-none uppercase">
+                          {forum.category}
+                        </Badge>
+                        <h4 className="text-sm font-bold text-[#0B1956] line-clamp-2 leading-tight">
+                          {forum.title}
+                        </h4>
+                        <h4 className="text-sm text-[#0B1956] line-clamp-2 leading-tight mt-3">
+                          {forum.description}
+                        </h4>
+                      </div>
+                    </div>
+                  </Card>
+                </Link>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Action Button */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogTrigger asChild>
+          <button className="fixed bottom-10 right-10 bg-[#0B1956] text-white px-6 py-3 rounded-full shadow-2xl flex items-center gap-2 hover:scale-105 transition-transform z-50">
+            <IconPlus size={20} />
+            <span className="font-bold">New Post</span>
+          </button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[600px] rounded-3xl">
+          <form onSubmit={submitPost} className="space-y-4">
+            <DialogHeader>
+              <DialogTitle>Create Post</DialogTitle>
+              <DialogDescription>
+                Start a new discussion with the community.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="grid gap-2">
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  placeholder="Your title here"
+                  className="rounded-xl"
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>Category</Label>
+                <Select onValueChange={setCategoryForm}>
+                  <SelectTrigger className="rounded-xl">
+                    <SelectValue placeholder="Choose category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories?.map((c) => (
+                      <SelectItem key={c.id} value={c.category}>
+                        {c.category}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="content">Content</Label>
+                <textarea
+                  id="content"
+                  name="content"
+                  rows={5}
+                  className="border rounded-xl p-3 outline-none focus:ring-2 focus:ring-primary/20 w-full"
+                  placeholder="Your content here"
+                />
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <DialogClose asChild>
+                <Button variant="outline" className="rounded-full">
+                  Cancel
+                </Button>
+              </DialogClose>
+              <Button type="submit" className="bg-[#0B1956] rounded-full">
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+    </SidebarInset>
   );
 }

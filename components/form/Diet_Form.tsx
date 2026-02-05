@@ -1,14 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { Label } from "../ui/label";
-import { Input } from "../ui/input";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import QuestionForm from "./QuestionForm";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "../ui/input-group";
-import { ButtonGroup, ButtonGroupText } from "../ui/button-group";
 
 interface DietFormProps {
   fruits: string;
@@ -37,7 +29,7 @@ const DietForm: React.FC<DietFormProps> = ({
     <div>
       <div className="flex flex-col gap-3 mt-2">
         <h1 className="font-bold text-2xl md:text-4xl lg:text-4xl  text-blue-950">
-          Let's Talk About Your Diet
+          Lets Talk About Your Diet
         </h1>
         <p className="text-sm md:text-lg lg:text-lg">
           Share your eating habits so we can better understand your lifestyle
