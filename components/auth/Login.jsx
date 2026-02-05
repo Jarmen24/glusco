@@ -99,7 +99,7 @@ const Login = () => {
             </Button>
           </div>
         </form>
-        <GoogleLoginButton />
+        {/* <GoogleLoginButton /> */}
       </CardContent>
     </Card>
   );

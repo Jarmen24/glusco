@@ -47,25 +47,9 @@ const ClinicalForm = ({
   updateFields,
 }: ClinicalFormProps) => {
   const router = useRouter();
-  const handleLogout = async () => {
-    // 1. Sign out from Supabase/API
-    const { error } = await client.auth.signOut();
-    if (error) throw error;
 
-    // 2. Clear Local Storage to prevent the "sticky login" issue you had
-    localStorage.clear();
-
-    // 3. Redirect to your entry point (usually /login or /)
-    // If /onboarding is your login page, keep it.
-    // Otherwise, change to "/login"
-    router.replace("/onboarding");
-
-    // 4. Force a refresh to ensure all Auth contexts are reset
-    router.refresh();
-  };
   return (
     <div>
-      <Button onClick={handleLogout}>Log out</Button>
       {/* Title */}
       <div className="flex flex-col gap-3 mt-2">
         <h1 className="font-bold text-lg md:text-4xl lg:text-4xl text-blue-950">

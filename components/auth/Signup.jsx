@@ -149,7 +149,7 @@ const Signup = () => {
             </Button>
           </div>
         </form>
-        <GoogleLoginButton />
+        {/* <GoogleLoginButton /> */}
       </CardContent>
     </Card>
   );

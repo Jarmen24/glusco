@@ -224,20 +224,66 @@ const MultiForm = () => {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
+    // 1. GLOBAL CHARACTER LIMIT CHECK
+    const tooLong = Object.entries(data).find(([key, value]) => {
+      if (typeof value === "string" && value.length > 20) return true;
+      return false;
+    });
+    if (tooLong) return toast.error(`Input for "${tooLong[0]}" is too long.`);
+
+    // 2. CLINICAL DATA VALIDATION (Step 0)
     if (currentStepIndex === 0) {
+      // Basic Required Fields
       const required = [
         "username",
         "age",
-        "gender",
         "height",
         "weight",
-        "waist",
-        "hip",
         "systolic",
         "diastolic",
       ];
       if (required.some((field) => !data[field as keyof FormData])) {
         return toast.error("Please fill in all required fields.");
+      }
+
+      // Helper to convert to number for comparison
+      const val = (field: keyof FormData) => parseFloat(data[field] as string);
+
+      // Blood Pressure Checks
+      if (val("systolic") > 300 || val("systolic") < 50) {
+        return toast.error("Please enter a realistic Systolic BP (50-300).");
+      }
+      if (val("diastolic") > 200 || val("diastolic") < 30) {
+        return toast.error("Please enter a realistic Diastolic BP (30-200).");
+      }
+
+      // HbA1c Check
+      if (data.hba1c && (val("hba1c") > 25 || val("hba1c") < 3)) {
+        return toast.error(
+          "HbA1c usually ranges from 3% to 25%. Please check your entry.",
+        );
+      }
+
+      // Fasting Blood Sugar (FBS) - mg/dL
+      if (data.fbs && (val("fbs") > 600 || val("fbs") < 20)) {
+        return toast.error(
+          "Please enter a realistic FBS value (20-600 mg/dL).",
+        );
+      }
+
+      // Cholesterol Checks
+      if (
+        data.cholesterol &&
+        (val("cholesterol") > 500 || val("cholesterol") < 50)
+      ) {
+        return toast.error(
+          "Total Cholesterol is usually between 50 and 500 mg/dL.",
+        );
+      }
+      if (data.hdl && (val("hdl") > 150 || val("hdl") < 5)) {
+        return toast.error(
+          "HDL (Good Cholesterol) is usually between 5 and 150 mg/dL.",
+        );
       }
 
       const nums = [
