@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { AuthContext } from "@/components/context/AuthProvider";
 import GeminiResult from "@/components/types/GeminiTypes";
 import { Loader2 } from "lucide-react";
+import { set } from "date-fns";
 
 export type FormData = {
   username: string;
@@ -135,8 +136,7 @@ const MultiForm = () => {
     useInsertPrediction();
 
   // Combined loading state for the overlay
-  const isGlobalLoading =
-    usernameLoading || formDataLoading || predictionLoading;
+  const [globalLoading, setGlobalLoading] = useState(false);
 
   function updateFields(fields: Partial<FormData>) {
     setData((prev) => ({ ...prev, ...fields }));
@@ -328,7 +328,7 @@ const MultiForm = () => {
     if (!isLastStep) return next();
 
     if (!userDB) return toast.error("User profile not found.");
-
+    setGlobalLoading(true);
     // Final Process
     const { error: nameErr } = await handleUpdateUsername(
       data.username,
@@ -346,6 +346,7 @@ const MultiForm = () => {
     if (!success) return toast.error("Failed to get prediction.");
 
     setSubmitted(true);
+    setGlobalLoading(false);
     toast.success("Form submitted successfully!");
     router.push("/prediction");
   }
@@ -353,7 +354,7 @@ const MultiForm = () => {
   return (
     <div className="flex items-center justify-center w-full relative">
       {/* FULL SCREEN OVERLAY */}
-      {isGlobalLoading && (
+      {globalLoading && (
         <LoadingOverlay
           message={
             predictionLoading
@@ -378,7 +379,7 @@ const MultiForm = () => {
                 className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
                 onClick={back}
                 type="button"
-                disabled={isGlobalLoading}
+                disabled={globalLoading}
               >
                 Back
               </Button>
@@ -388,7 +389,7 @@ const MultiForm = () => {
             <Button
               className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
               type="submit"
-              disabled={checkUsername || isGlobalLoading}
+              disabled={checkUsername || globalLoading}
             >
               {checkUsername ? "Validating..." : isLastStep ? "Submit" : "Next"}
             </Button>
