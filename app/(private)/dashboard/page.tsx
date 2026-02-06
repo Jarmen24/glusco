@@ -92,9 +92,9 @@ export default function Page() {
           setPredictionData(predRes.data);
           const percent = Math.floor(predRes.data.percent);
           // Sync with Native logic: <31 Green, <61 Amber
-          if (percent < 31)
+          if (percent <= 30)
             setRiskConfig({ label: "Low Risk", color: "#10B981" });
-          else if (percent < 61)
+          else if (percent <= 60)
             setRiskConfig({ label: "Moderate Risk", color: "#F59E0B" });
           else setRiskConfig({ label: "High Risk", color: "#EF4444" });
         }
@@ -110,8 +110,8 @@ export default function Page() {
             const dateObj = new Date(dateString);
             const p = Math.floor(entry.percent);
 
-            if (p < 31) low.push(dateObj);
-            else if (p < 61) moderate.push(dateObj);
+            if (p <= 30) low.push(dateObj);
+            else if (p <= 60) moderate.push(dateObj);
             else high.push(dateObj);
           });
           setHistoryDays({ low, moderate, high });
