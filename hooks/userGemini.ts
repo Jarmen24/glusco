@@ -141,7 +141,7 @@ export const getUserGemini = async (modelPrediction: object) => {
       - Clinical Thresholds: HbA1c (Normal <5.7, Diabetes >=6.5), FBS (Normal <100, Diabetes >=126)
       - If percent is < 31, return "low"; if percent is < 61, return "moderate"; else return "vigorous".
       - only use icons from MaterialCommunityIcons
-      - If percent is < 31, return "low"; if percent is < 61, return "moderate"; else return "vigorous".
+      - If percent is <= 30, return "low"; if percent is <= 60, return "moderate"; else return "vigorous".
 
       PATIENT DATA:
       ${JSON.stringify(modelPrediction)}
@@ -234,7 +234,7 @@ export const getUserGeminiRetake = async ({
       - Model Weights: ${JSON.stringify(featureWeights)}
       - Clinical Thresholds: HbA1c (Normal <5.7, Diabetes >=6.5), FBS (Normal <100, Diabetes >=126)
       - only use icons from MaterialCommunityIcons
-      - If percent is < 31, return "low"; if percent is < 61, return "moderate"; else return "vigorous".
+      - If percent is <= 30, return "low"; if percent is <= 60, return "moderate"; else return "vigorous".
       
       PATIENT DATA LAST WEEK:
       ${JSON.stringify(modelPredictionLastWeek)}
@@ -252,11 +252,11 @@ export const getUserGeminiRetake = async ({
 
       Explain to the user:
       1. Did they have a 'Good' or 'Bad' week?
-      2. What specific change (e.g. exercise) caused the drop or rise in risk?
+      2. What specific change (e.g. exercise) caused the drop or rise in risk, explain.
       3. What should they focus on next week (e.g. reducing fried food)?
       4. Identify which lifestyle factors (from the weights/schema) contributed most to the risk change. 
       5. Generate 5 highly specific, actionable "Daily Tasks" for the user to help reduce their risk next week.
-
+      6. Ensure that the output format is correct.
       OUTPUT FORMAT:
       Return response ONLY as JSON: 
       {

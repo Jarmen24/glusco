@@ -53,7 +53,7 @@ const ClinicalForm = ({
       {/* Title */}
       <div className="flex flex-col gap-3 mt-2">
         <h1 className="font-bold text-lg md:text-4xl lg:text-4xl text-blue-950">
-          Lets Get to Know You!
+          How was your clinical data this week?
         </h1>
         <p className="text-sm md:text-lg lg:text-lg">
           We’ll start with a few simple details to help us understand you better
