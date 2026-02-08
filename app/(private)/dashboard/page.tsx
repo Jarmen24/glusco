@@ -56,7 +56,7 @@ export async function getLatestUserFormData(id: number) {
 }
 
 export default function Page() {
-  const userDB = useGetUser();
+  const { userDB, loading } = useGetUser();
   const [predictionData, setPredictionData] = useState<PredData | null>(null);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [selectedDay, setSelectedDay] = useState<Date | undefined>(new Date());

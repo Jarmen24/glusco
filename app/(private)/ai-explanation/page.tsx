@@ -24,7 +24,7 @@ import {
 import { getUserGemini, insertAnalysisToDB } from "@/hooks/userGemini";
 
 export default function AIAnalysisPage() {
-  const userDB = useGetUser();
+  const { userDB, loading: userLoading } = useGetUser();
   const [aiText, setAiText] = useState<GeminiResult | null>(null);
   const [aiLoading, setAiLoading] = useState<boolean>(true);
   const [apiError, setApiError] = useState<string | null>(null);

@@ -10,7 +10,7 @@ import "react-circular-progressbar/dist/styles.css";
 import { SyncLoader } from "react-spinners";
 
 const Prediction = () => {
-  const userDB = useGetUser();
+  const { userDB, loading: userLoading } = useGetUser();
 
   const [prediction, setPrediction] = useState<number | null>(null);
   const [riskLabel, setRiskLabel] = useState<string>("");

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useContext, useState, FormEvent } from "react";
+import React, { useContext, useState, FormEvent, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import useMultiStepForm from "@/hooks/useMultiStepForm";
@@ -22,7 +22,6 @@ import { useRouter } from "next/navigation";
 import { AuthContext } from "@/components/context/AuthProvider";
 import GeminiResult from "@/components/types/GeminiTypes";
 import { Loader2 } from "lucide-react";
-import { set } from "date-fns";
 
 export type FormData = {
   username: string;
@@ -102,7 +101,6 @@ const INITIAL_DATA: FormData = {
   sleep_alcohol: "",
 };
 
-// --- LOADING OVERLAY COMPONENT ---
 const LoadingOverlay = ({ message }: { message: string }) => (
   <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black/60 backdrop-blur-sm">
     <div className="bg-white p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 text-center max-w-sm mx-4">
@@ -110,33 +108,26 @@ const LoadingOverlay = ({ message }: { message: string }) => (
       <h3 className="text-xl font-bold text-gray-900">
         Processing Health Data
       </h3>
-      <p className="text-gray-500 text-sm">
-        {message}... Please wait while we process your assessment.
-      </p>
+      <p className="text-gray-500 text-sm">{message}... Please wait.</p>
     </div>
   </div>
 );
 
 const MultiForm = () => {
-  const auth = useContext(AuthContext);
-  const userDB = useGetUser();
   const router = useRouter();
 
+  // 1. ALL HOOKS MUST BE AT THE TOP
+  const { userDB, loading: userLoading } = useGetUser();
   const [data, setData] = useState(INITIAL_DATA);
   const [prediction, setPrediction] = useState<string | null>(null);
   const [submitted, setSubmitted] = useState(false);
   const [checkUsername, setCheckUsername] = useState(false);
-  const [aiText, setAiText] = useState<GeminiResult | null>(null);
+  const [globalLoading, setGlobalLoading] = useState(false);
 
-  const { handleUpdateUsername, loading: usernameLoading } =
-    useUpdateUsername();
-  const { handleUpdateUserForm, loading: formDataLoading } =
-    useUpdateFormData();
+  const { handleUpdateUsername } = useUpdateUsername();
+  const { handleUpdateUserForm } = useUpdateFormData();
   const { handleInsertPrediction, loading: predictionLoading } =
     useInsertPrediction();
-
-  // Combined loading state for the overlay
-  const [globalLoading, setGlobalLoading] = useState(false);
 
   function updateFields(fields: Partial<FormData>) {
     setData((prev) => ({ ...prev, ...fields }));
@@ -151,29 +142,22 @@ const MultiForm = () => {
       <FamilyForm key="step5" {...data} updateFields={updateFields} />,
     ]);
 
-  if (!auth) {
-    return (
-      <div className="p-10 text-center">
-        <p>
-          Auth context not found. Make sure AuthProvider wraps this component.
-        </p>
-      </div>
-    );
-  }
+  // 2. REDIRECT LOGIC IN USEEFFECT
+  useEffect(() => {
+    if (!userLoading && !userDB) {
+      router.replace("/onboarding");
+    }
+  }, [userDB, userLoading, router]);
 
-  const { loading: authLoading } = auth;
-  if (authLoading)
-    return <div className="p-10 text-center">Loading User...</div>;
-
+  // 3. LOGIC FUNCTIONS
   const fetchPrediction = async () => {
     try {
-      if (!data.height || !data.weight) return 0;
+      if (!data.height || !data.weight || !userDB) return 0;
 
       const payload = Object.fromEntries(
         Object.entries(data).map(([key, value]) => {
-          if (key === "exercise_types" || key === "username") {
+          if (key === "exercise_types" || key === "username")
             return [key, value];
-          }
           return [key, parseFloat(value as string) || 0];
         }),
       );
@@ -187,18 +171,8 @@ const MultiForm = () => {
         },
       );
 
-      if (response.status === 422) {
-        const errorJson = await response.json();
-        console.log("VALIDATION ERROR:", errorJson.detail);
-        return 0;
-      }
-
+      if (!response.ok) return 0;
       const result = await response.json();
-
-      if (!response.ok || !userDB) {
-        console.error("Prediction error or no userDB");
-        return 0;
-      }
 
       const { error } = await handleInsertPrediction(
         parseInt(userDB.id),
@@ -208,15 +182,12 @@ const MultiForm = () => {
         result.percent,
       );
 
-      if (error) {
-        console.error("Error inserting prediction:", error);
-        return 0;
-      }
+      if (error) return 0;
 
       setPrediction(result.percent);
       return 1;
     } catch (err) {
-      console.error("Error fetching prediction:", err);
+      console.error(err);
       return 0;
     }
   };
@@ -224,16 +195,14 @@ const MultiForm = () => {
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    // 1. GLOBAL CHARACTER LIMIT CHECK
-    const tooLong = Object.entries(data).find(([key, value]) => {
-      if (typeof value === "string" && value.length > 20) return true;
-      return false;
-    });
+    // Character Check
+    const tooLong = Object.entries(data).find(
+      ([_, v]) => typeof v === "string" && v.length > 50,
+    );
     if (tooLong) return toast.error(`Input for "${tooLong[0]}" is too long.`);
 
-    // 2. CLINICAL DATA VALIDATION (Step 0)
+    // Step 0 Validation (Clinical)
     if (currentStepIndex === 0) {
-      // Basic Required Fields
       const required = [
         "username",
         "age",
@@ -242,61 +211,8 @@ const MultiForm = () => {
         "systolic",
         "diastolic",
       ];
-      if (required.some((field) => !data[field as keyof FormData])) {
+      if (required.some((f) => !data[f as keyof FormData])) {
         return toast.error("Please fill in all required fields.");
-      }
-
-      // Helper to convert to number for comparison
-      const val = (field: keyof FormData) => parseFloat(data[field] as string);
-
-      // Blood Pressure Checks
-      if (val("systolic") > 300 || val("systolic") < 50) {
-        return toast.error("Please enter a realistic Systolic BP (50-300).");
-      }
-      if (val("diastolic") > 200 || val("diastolic") < 30) {
-        return toast.error("Please enter a realistic Diastolic BP (30-200).");
-      }
-
-      // HbA1c Check
-      if (data.hba1c && (val("hba1c") > 25 || val("hba1c") < 3)) {
-        return toast.error(
-          "HbA1c usually ranges from 3% to 25%. Please check your entry.",
-        );
-      }
-
-      // Fasting Blood Sugar (FBS) - mg/dL
-      if (data.fbs && (val("fbs") > 600 || val("fbs") < 20)) {
-        return toast.error(
-          "Please enter a realistic FBS value (20-600 mg/dL).",
-        );
-      }
-
-      // Cholesterol Checks
-      if (
-        data.cholesterol &&
-        (val("cholesterol") > 500 || val("cholesterol") < 50)
-      ) {
-        return toast.error(
-          "Total Cholesterol is usually between 50 and 500 mg/dL.",
-        );
-      }
-      if (data.hdl && (val("hdl") > 150 || val("hdl") < 5)) {
-        return toast.error(
-          "HDL (Good Cholesterol) is usually between 5 and 150 mg/dL.",
-        );
-      }
-
-      const nums = [
-        "age",
-        "height",
-        "weight",
-        "waist",
-        "hip",
-        "systolic",
-        "diastolic",
-      ];
-      if (nums.some((f) => isNaN(Number(data[f as keyof FormData])))) {
-        return toast.error("Please enter valid numbers.");
       }
 
       setCheckUsername(true);
@@ -307,59 +223,62 @@ const MultiForm = () => {
         .maybeSingle();
       setCheckUsername(false);
 
-      if (exists) return toast.error("Username is already taken.");
-    }
-
-    if (currentStepIndex === 1) {
-      const required = [
-        "fruits",
-        "vegetables",
-        "fried",
-        "sweets",
-        "fastfood",
-        "processed",
-        "softdrink",
-        "weight_concern",
-      ];
-      if (required.some((f) => !data[f as keyof FormData]))
-        return toast.error("Please fill all fields.");
+      if (exists && exists.id !== userDB?.id)
+        return toast.error("Username is already taken.");
     }
 
     if (!isLastStep) return next();
 
+    // Final Submission
     if (!userDB) return toast.error("User profile not found.");
+
     setGlobalLoading(true);
-    // Final Process
+
     const { error: nameErr } = await handleUpdateUsername(
       data.username,
       userDB.email,
     );
-    if (nameErr) return toast.error("Failed to update username.");
+    if (nameErr) {
+      setGlobalLoading(false);
+      return toast.error("Failed to update username.");
+    }
 
     const { error: formErr } = await handleUpdateUserForm(
       data,
       parseInt(userDB.id),
     );
-    if (formErr) return toast.error("Failed to update form data.");
+    if (formErr) {
+      setGlobalLoading(false);
+      return toast.error("Failed to update form data.");
+    }
 
     const success = await fetchPrediction();
+    setGlobalLoading(false);
+
     if (!success) return toast.error("Failed to get prediction.");
 
-    setSubmitted(true);
-    setGlobalLoading(false);
-    toast.success("Form submitted successfully!");
+    toast.success("Assessment complete!");
     router.push("/prediction");
   }
 
+  // 4. CONDITIONAL RENDERING (MUST BE BELOW ALL HOOKS)
+  if (userLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white/80">
+        <Loader2 className="h-10 w-10 animate-spin text-[#0B1956]" />
+        <span className="ml-3 font-medium">Loading Assessment...</span>
+      </div>
+    );
+  }
+
+  if (!userDB) return null; // Redirect is handled by useEffect above
+
   return (
     <div className="flex items-center justify-center w-full relative">
-      {/* FULL SCREEN OVERLAY */}
       {globalLoading && (
         <LoadingOverlay
           message={
-            predictionLoading
-              ? "Generating Health Insights"
-              : "Updating Profile"
+            predictionLoading ? "Analyzing Health Risks" : "Saving Progress"
           }
         />
       )}
@@ -376,7 +295,7 @@ const MultiForm = () => {
           <div className="flex justify-between items-center mt-3">
             {!isFirstStep ? (
               <Button
-                className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
+                className="lg:text-lg text-sm bg-blue-950"
                 onClick={back}
                 type="button"
                 disabled={globalLoading}
@@ -386,12 +305,13 @@ const MultiForm = () => {
             ) : (
               <div />
             )}
+
             <Button
-              className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
+              className="lg:text-lg text-sm bg-blue-950"
               type="submit"
               disabled={checkUsername || globalLoading}
             >
-              {checkUsername ? "Validating..." : isLastStep ? "Submit" : "Next"}
+              {checkUsername ? "Checking..." : isLastStep ? "Submit" : "Next"}
             </Button>
           </div>
         </form>

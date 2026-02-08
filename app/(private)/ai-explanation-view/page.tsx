@@ -21,7 +21,7 @@ import { useUserAnalysis } from "@/hooks/profileHooks";
 const isLoading = false;
 
 export default function AIAnalysisPage() {
-  const userDB = useGetUser();
+  const { userDB, loading } = useGetUser();
 
   const [aiText, setAiText] = React.useState<GeminiResult>();
   const [aiLoading, setAiLoading] = React.useState<boolean>(isLoading);

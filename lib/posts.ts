@@ -75,6 +75,17 @@ export async function getAllUserPrediction(id: number) {
     .order("created_at", { ascending: false });
 }
 
+export async function getAllUserPredictionUsingUUID(id: string) {
+  console.log("Fetching latest prediction for user ID:", id);
+
+  return await client
+    .from("pred")
+    .select("*")
+    .eq("uuid", id)
+    // Sort by created_at, descending (newest first)
+    .order("created_at", { ascending: false });
+}
+
 export async function getUserFormData(id: number) {
   console.log("Fetching latest form_data for user ID:", id);
 

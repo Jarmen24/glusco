@@ -53,7 +53,7 @@ import Image from "next/image";
 
 export default function Page() {
   const { user } = useAuth();
-  const userDB = useGetUser();
+  const { userDB, loading: userLoading } = useGetUser();
   const { forums, loading: forumLoading } = useAllForums();
   const { categories } = useAllCategories();
   const { forums: trendingForums, loading: trendingLoading } =

@@ -75,7 +75,7 @@ export default function InsightsPage() {
     value: 0,
   });
 
-  const userDB = useGetUser();
+  const { userDB, loading: userLoading } = useGetUser();
   const [prediction, setPrediction] = React.useState<PredData[] | PredData>();
   const [exercises, setExercises] = React.useState<ExerciseItem[]>([]);
   const [loading, setLoading] = React.useState(false);

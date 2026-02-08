@@ -45,5 +45,5 @@ export function useGetUser() {
     fetchUser();
   }, []);
 
-  return userDB;
+  return { userDB, loading };
 }

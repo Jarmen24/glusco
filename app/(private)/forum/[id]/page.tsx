@@ -29,7 +29,7 @@ export default function Page() {
   const { user, loading } = useAuth();
   const params = useParams();
   const id = parseInt(params.id as string);
-  const userDB = useGetUser();
+  const { userDB, loading: userLoading } = useGetUser();
   const { forum, loading: forumLoading, refetch } = useGetForum(id);
   const { postComment, loading: posting } = usePostComment(); // ✅ use the hook
   const { toggleLike } = useLikePost();
@@ -37,7 +37,7 @@ export default function Page() {
   React.useEffect(() => {
     if (forum && userDB) {
       const hasLiked = forum.forum_likes?.some(
-        (like) => like.user?.toString() === userDB.id?.toString()
+        (like) => like.user?.toString() === userDB.id?.toString(),
       );
       setLike(!!hasLiked);
     }
