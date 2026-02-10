@@ -182,10 +182,8 @@ const MultiFormRetake = () => {
       }
     };
 
-    if (!auth?.loading) {
-      loadFormData();
-    }
-  }, [userDB?.id, auth?.loading]);
+    loadFormData();
+  }, [userDB?.id]);
 
   const isGlobalLoading =
     usernameLoading || formDataLoading || predictionLoading;

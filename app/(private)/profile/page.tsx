@@ -302,4 +302,4 @@ const Profile = () => {
   );
 };
 
-export default page;
+export default Profile;
