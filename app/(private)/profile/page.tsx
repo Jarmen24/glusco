@@ -27,8 +27,8 @@ import React from "react";
 import { SyncLoader } from "react-spinners";
 import { toast } from "sonner";
 
-const page = () => {
-  const userDB = useGetUser();
+const Profile = () => {
+  const { userDB, loading: userLoading } = useGetUser();
   const { handleUpload, loading, url } = useUploadImage();
   const {
     handleUpdateProfile,
@@ -48,7 +48,7 @@ const page = () => {
   };
 
   const handleUpdatePasswordForm = async (
-    e: React.FormEvent<HTMLFormElement>
+    e: React.FormEvent<HTMLFormElement>,
   ) => {
     const new_password = e.currentTarget.new_password.value;
     const confirm_password = e.currentTarget.confirm_password.value;
@@ -70,7 +70,7 @@ const page = () => {
     if (!editing) return;
     const form = e.currentTarget;
     const fileInput = form.querySelector(
-      'input[name="profileImage"]'
+      'input[name="profileImage"]',
     ) as HTMLInputElement;
     const formData = new FormData(form);
     const file = fileInput.files?.[0];

@@ -127,7 +127,7 @@ export async function getLatestUserFormData(id: number) {
 
 const MultiFormRetake = () => {
   const auth = useContext(AuthContext);
-  const userDB = useGetUser();
+  const { userDB, loading } = useGetUser();
   const router = useRouter();
 
   const [data, setData] = useState(INITIAL_DATA);
