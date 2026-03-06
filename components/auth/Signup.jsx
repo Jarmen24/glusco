@@ -97,7 +97,7 @@ const Signup = () => {
         toast.error("Failed to sign up");
         return;
       }
-      toast.success("Login Successful");
+      toast.success("RegistrationSuccessful");
     } catch (error) {
       toast.error(error.message);
     }
@@ -132,7 +132,7 @@ const Signup = () => {
                 id="password"
                 name="password"
                 type="password"
-                placeholder="********"
+                placeholder="Enter your password"
               />
             </div>
             <div className="grid gap-2">
@@ -141,7 +141,7 @@ const Signup = () => {
                 id="confirm_password"
                 name="confirm_password"
                 type="password"
-                placeholder="********"
+                placeholder="Confirm your password"
               />
             </div>
             <Button type="submit" className="w-full cursor-pointer">

@@ -5,8 +5,8 @@ import { Montserrat } from "next/font/google";
 import { Providers } from "@/components/Providers";
 
 export const metadata = {
-  title: "Onboarding",
-  description: "Glusco Login and Signup Forms",
+  title: "Glusco",
+  description: "Glusco",
 };
 const montserrat = Montserrat({
   subsets: ["latin"],

@@ -1,10 +1,11 @@
 // app/layout.tsx
+import Image from "next/image";
 import "../globals.css";
 import { Providers } from "@/components/Providers";
 
 export const metadata = {
   title: "Onboarding",
-  description: "Glusco Login and Signup Forms",
+  description: "Signup and Login Forms for Glusco",
 };
 
 // ❌ Don't add "use client" here! Layout must be a Server Component
@@ -21,6 +22,7 @@ export default function RootLayout({
       </div>
 
       {/* ✅ Client-only code inside Providers */}
+
       <Providers>{children}</Providers>
     </>
   );

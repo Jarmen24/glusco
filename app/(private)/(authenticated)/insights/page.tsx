@@ -30,12 +30,16 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  BarChart,
+  Bar,
+  Cell,
+  LabelList,
 } from "recharts";
 
 // Mocking your JSON imports (Ensure these paths exist in your web project)
-import lightExercises from "../../../components/workouts/light_exercises.json";
-import moderateExercises from "../../../components/workouts/moderate_exercises.json";
-import vigorousExercises from "../../../components/workouts/vigorous_workouts.json";
+import lightExercises from "../../../../components/workouts/light_exercises.json";
+import moderateExercises from "../../../../components/workouts/moderate_exercises.json";
+import vigorousExercises from "../../../../components/workouts/vigorous_workouts.json";
 import { PredData } from "@/components/types/UserDB";
 import GeminiResult, { DailyTask } from "@/components/types/GeminiTypes";
 import {
@@ -44,6 +48,8 @@ import {
   useGetUserWithPrediction,
   useUserAnalysis,
 } from "@/hooks/profileHooks";
+import { SyncLoader } from "react-spinners";
+import { useHealthData } from "@/components/context/DataContext";
 
 const PRIMARY_COLOR = "#0B1956";
 interface ExerciseItem {
@@ -62,7 +68,21 @@ interface ExerciseItem {
   rest?: string;
   note?: string;
 }
+
+const getRiskColor = (value: number) => {
+  if (value < 31) return "#16A34A"; // Green (Low)
+  if (value < 61) return "#F97316"; // Orange (Medium)
+  return "#DC2626"; // Red (High)
+};
 export default function InsightsPage() {
+  const {
+    formData,
+    predictionData,
+    predictionHistory,
+    userDB,
+    isDataLoading,
+    aiText,
+  } = useHealthData();
   const [riskLevel, setRiskLevel] = useState<"Light" | "Moderate" | "Vigorous">(
     "Light",
   );
@@ -75,68 +95,67 @@ export default function InsightsPage() {
     value: 0,
   });
 
-  const { userDB, loading: userLoading } = useGetUser();
   const [prediction, setPrediction] = React.useState<PredData[] | PredData>();
   const [exercises, setExercises] = React.useState<ExerciseItem[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [analysis, setAnalysis] = React.useState<GeminiResult>();
-  const {
-    fetchUserAllPrediction,
-    loading: predLoading,
-    error,
-  } = useGetAllUserPrediction();
+  // const {
+  //   fetchUserAllPrediction,
+  //   loading: predLoading,
+  //   error,
+  // } = useGetAllUserPrediction();
 
-  const {
-    fetchAnalysis,
-    loading: analysisLoading,
-    error: analysisError,
-  } = useUserAnalysis();
+  // const {
+  //   fetchAnalysis,
+  //   loading: analysisLoading,
+  //   error: analysisError,
+  // } = useUserAnalysis();
 
-  const hasRun = React.useRef(false);
-  useEffect(() => {
-    if (hasRun.current) return;
-    const loadData = async () => {
-      // 1. Check if user exists
-      console.log(userDB);
-      if (!userDB?.id) {
-        console.log("User not logged in");
-        return;
-      }
+  // const hasRun = React.useRef(false);
+  // useEffect(() => {
+  //   if (hasRun.current) return;
+  //   const loadData = async () => {
+  //     // 1. Check if user exists
+  //     console.log(userDB);
+  //     if (!userDB?.id) {
+  //       console.log("User not logged in");
+  //       return;
+  //     }
 
-      try {
-        setLoading(true);
-        // 2. Fetch the prediction (which likely includes the AI analysis)
-        const { data, error } = await fetchUserAllPrediction(
-          parseInt(userDB.id),
-        );
+  //     try {
+  //       setLoading(true);
+  //       // 2. Fetch the prediction (which likely includes the AI analysis)
+  //       const { data, error } = await fetchUserAllPrediction(
+  //         parseInt(userDB.id),
+  //       );
 
-        if (!data || error) {
-          // Assuming your hook/API returns the AI analysis in the data
-          console.log("Error fetching predictions:", error);
-          return;
-        }
+  //       if (!data || error) {
+  //         // Assuming your hook/API returns the AI analysis in the data
+  //         console.log("Error fetching predictions:", error);
+  //         return;
+  //       }
 
-        const { data: analysis, error: analysisError } = await fetchAnalysis(
-          parseInt(userDB.id),
-        );
+  //       const { data: analysis, error: analysisError } = await fetchAnalysis(
+  //         parseInt(userDB.id),
+  //       );
 
-        if (!analysis || analysisError) {
-          // Assuming your hook/API returns the AI analysis in the data
-          console.log("Error fetching analysis:", analysisError);
-          return;
-        }
-        setPrediction(data);
-        setAnalysis(analysis);
-        setLoading(false);
-      } catch (err) {
-        console.error("Error fetching analysis:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
+  //       if (!analysis || analysisError) {
+  //         // Assuming your hook/API returns the AI analysis in the data
+  //         console.log("Error fetching analysis:", analysisError);
+  //         return;
+  //       }
+  //       setPrediction(data);
+  //       setAnalysis(analysis);
+  //       setLoading(false);
+  //     } catch (err) {
+  //       console.error("Error fetching analysis:", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
 
-    loadData();
-  }, [userDB?.id]);
+  //   loadData();
+  // }, [userDB?.id]);
   // Load Persisted Data (Web version using localStorage)
   useEffect(() => {
     const today = new Date().toISOString().split("T")[0];
@@ -158,7 +177,9 @@ export default function InsightsPage() {
 
   // Update logic mirrored from RN
   useEffect(() => {
-    const predictions = Array.isArray(prediction) ? prediction : [];
+    const predictions = Array.isArray(predictionHistory)
+      ? predictionHistory
+      : [];
     if (predictions.length > 0) {
       // Streak Calculation
       const dates = predictions
@@ -222,7 +243,7 @@ export default function InsightsPage() {
         setExercises(moderateExercises.Moderate_Exercises);
       else setExercises(vigorousExercises.Vigorous_Exercises);
     }
-  }, [prediction]);
+  }, [predictionHistory]);
 
   const toggleTask = (taskId: string) => {
     const newTasks = completedTasks.includes(taskId)
@@ -240,25 +261,38 @@ export default function InsightsPage() {
 
   // Chart Data Formatting
   const chartData = useMemo(() => {
-    const predictions = Array.isArray(prediction) ? prediction : [];
-    return predictions.slice(-7).map((p: PredData, i: number) => ({
-      name: `T-${predictions.slice(-7).length - 1 - i}`,
-      percent: p.percent,
-    }));
-  }, [prediction]);
+    const predictions = Array.isArray(predictionHistory)
+      ? predictionHistory
+      : [];
 
-  if (predLoading) {
-    return (
-      <SidebarInset className="bg-[#F9FAFB]">
-        <div className="flex flex-col items-center justify-center h-screen bg-[#0B1956] text-white">
-          <Loader2 className="w-10 h-10 animate-spin mb-4" />
-          <p className="text-lg opacity-80">Syncing health records...</p>
-        </div>
-      </SidebarInset>
-    );
-  }
+    return predictions
+      .sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime(),
+      )
+      .slice(-7)
+      .map((p: PredData) => {
+        const date = new Date(p.created_at);
 
-  const dailyTasks = analysis?.daily_tasks || [];
+        return {
+          date: date.toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+          }), // e.g. Mar 03
+          percent: p.percent,
+        };
+      });
+  }, [predictionHistory]);
+
+  // if (predLoading) {
+  //   return (
+  //     <div className="fixed inset-0 flex flex-col justify-center items-center bg-[#FDFCFB] z-50">
+  //       <SyncLoader color="#0B1956" size={12} margin={4} />
+  //     </div>
+  //   );
+  // }
+
+  const dailyTasks = aiText?.daily_tasks || [];
 
   return (
     <SidebarInset className="bg-[#F9FAFB]">
@@ -287,7 +321,7 @@ export default function InsightsPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Checklist */}
             <section>
-              <h2 className="text-xl font-bold text-gray-800 mb-4">
+              <h2 className="text-2xl font-bold text-gray-800 mb-4">
                 Daily Checklist
               </h2>
               <div className="grid gap-3">
@@ -303,7 +337,7 @@ export default function InsightsPage() {
                         <button
                           key={taskId}
                           onClick={() => toggleTask(taskId)}
-                          className={`flex items-center p-4 rounded-xl border transition-all text-left shadow-sm bg-white ${
+                          className={`flex items-center p-4 rounded-xl border transition-all text-left shadow-sm bg-white cursor-pointer ${
                             isDone
                               ? "bg-green-50 border-green-200"
                               : "hover:border-[#C7D2FE]"
@@ -355,43 +389,80 @@ export default function InsightsPage() {
             </section>
 
             {/* Hydration */}
-            <Card className="rounded-2xl shadow-sm overflow-hidden border-none bg-white">
-              <CardContent className="p-6 flex items-center justify-between">
-                <div className="space-y-1">
-                  <h3 className="font-bold text-gray-800 flex items-center gap-2">
-                    <Droplets className="text-blue-500" size={20} /> Daily
-                    Hydration
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {waterCount} / 8 glasses today
-                  </p>
-                  <Progress
-                    value={(waterCount / 8) * 100}
-                    className="w-48 h-2 mt-2"
-                  />
-                </div>
-                <div className="flex items-center gap-3">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => updateWater(-1)}
+            <Card className="rounded-2xl shadow-sm border-none p-6 gap-2">
+              <h3 className="font-bold text-gray-800 mb-1 text-xl">
+                Risk Trend
+              </h3>
+              <p className="text-xs text-gray-500 mb-4 mt-0">
+                Diabetes Risk Percentage Over Time
+              </p>
+
+              <div className="h-[280px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 0, right: 0, left: 0, bottom: 0 }}
                   >
-                    <Minus size={18} />
-                  </Button>
-                  <span className="text-xl font-bold w-8 text-center">
-                    {waterCount}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    className="rounded-full"
-                    onClick={() => updateWater(1)}
-                  >
-                    <Plus size={18} />
-                  </Button>
-                </div>
-              </CardContent>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#F3F4F6" />
+
+                    {/* X AXIS */}
+                    <XAxis
+                      dataKey="date"
+                      tick={{ fontSize: 16 }}
+                      padding={{ left: 20, right: 20 }}
+                    />
+
+                    {/* Y AXIS */}
+                    <YAxis
+                      domain={[0, 100]}
+                      tick={{ fontSize: 16 }}
+                      padding={{ top: 20, bottom: 20 }}
+                    />
+
+                    <Tooltip
+                      formatter={(value: number) => `${value}%`}
+                      contentStyle={{
+                        borderRadius: "5px",
+                        border: "none",
+                        boxShadow: "0 6px 16px rgba(0,0,0,0.1)",
+                      }}
+                    />
+
+                    <Bar dataKey="percent" radius={[10, 10, 0, 0]} barSize={70}>
+                      {chartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={getRiskColor(entry.percent)}
+                        />
+                      ))}
+
+                      {/* Pill Label on Top */}
+                      <LabelList
+                        dataKey="percent"
+                        position="top"
+                        content={({ x, y, value }) => {
+                          const color = getRiskColor(value as number);
+
+                          return (
+                            <g>
+                              <text
+                                x={x}
+                                y={(y as number) - 13}
+                                fill={color}
+                                textAnchor="middle"
+                                fontSize={14}
+                                fontWeight={600}
+                              >
+                                {value}%
+                              </text>
+                            </g>
+                          );
+                        }}
+                      />
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             </Card>
           </div>
 
@@ -400,7 +471,7 @@ export default function InsightsPage() {
             {/* Progress Stats */}
             <div className="grid grid-cols-1 gap-3">
               <Card className="rounded-xl border-none shadow-sm">
-                <CardContent className="p-4 flex items-center gap-4">
+                <CardContent className="p-4 flex items-center gap-4 pl-5">
                   <div
                     className={`p-3 rounded-full ${riskChange.isImprovement ? "bg-green-100" : "bg-red-100"}`}
                   >
@@ -411,10 +482,10 @@ export default function InsightsPage() {
                     )}
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase">
+                    <p className="text-md text-gray-500 font-bold uppercase">
                       Risk Change
                     </p>
-                    <p className="text-sm font-semibold">
+                    <p className="text-xl font-semibold">
                       {riskChange.message}
                     </p>
                   </div>
@@ -422,12 +493,12 @@ export default function InsightsPage() {
               </Card>
 
               <Card className="rounded-xl border-none shadow-sm">
-                <CardContent className="p-4 flex items-center gap-4">
+                <CardContent className="p-4 flex items-center gap-4 pl-5">
                   <div className="p-3 rounded-full bg-orange-100 text-orange-600">
                     <Flame />
                   </div>
                   <div>
-                    <p className="text-xs text-gray-500 font-bold uppercase">
+                    <p className="text-md text-gray-500 font-bold uppercase">
                       Current Streak
                     </p>
                     <p className="text-xl font-black text-[#E4572E]">
@@ -437,43 +508,6 @@ export default function InsightsPage() {
                 </CardContent>
               </Card>
             </div>
-
-            {/* Trend Chart */}
-            <Card className="rounded-2xl shadow-sm border-none p-4">
-              <h3 className="font-bold text-gray-800 mb-4 px-2">Risk Trend</h3>
-              <div className="h-[200px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={chartData}>
-                    <CartesianGrid
-                      strokeDasharray="3 3"
-                      vertical={false}
-                      stroke="#F3F4F6"
-                    />
-                    <XAxis
-                      dataKey="name"
-                      fontSize={10}
-                      axisLine={false}
-                      tickLine={false}
-                    />
-                    <YAxis hide domain={[0, 100]} />
-                    <Tooltip
-                      contentStyle={{
-                        borderRadius: "12px",
-                        border: "none",
-                        boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
-                      }}
-                    />
-                    <Line
-                      type="monotone"
-                      dataKey="percent"
-                      stroke="#E4572E"
-                      strokeWidth={3}
-                      dot={{ r: 4, fill: "#E4572E" }}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
 
             {/* Exercises */}
             <section>

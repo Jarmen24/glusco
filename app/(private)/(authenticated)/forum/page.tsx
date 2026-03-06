@@ -145,7 +145,7 @@ export default function Page() {
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                className={`px-6 py-2 rounded-full text-sm font-semibold transition ${
+                className={`px-6 py-2 rounded-full text-sm font-semibold transition cursor-pointer ${
                   activeTab === tab
                     ? "bg-[#0B1956] text-white"
                     : "bg-[#F3F4F6] text-[#666]"
@@ -162,7 +162,7 @@ export default function Page() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`whitespace-nowrap px-4 py-1.5 rounded-lg text-xs font-medium border transition ${
+                  className={`whitespace-nowrap px-4 py-1.5 cursor-pointer rounded-lg text-xs font-medium border transition ${
                     selectedCategory === cat
                       ? "bg-[#EEF2FF] border-[#4338CA] text-[#4338CA] font-bold"
                       : "bg-white border-[#E5E7EB] text-[#6B7280]"
@@ -186,7 +186,7 @@ export default function Page() {
             ) : filteredPosts.length > 0 ? (
               filteredPosts.map((item) => (
                 <Link href={`/forum/${item.id}`} key={item.id}>
-                  <Card className="hover:bg-slate-50 transition border-[#F3F4F6] shadow-sm rounded-2xl p-4 mb-4 gap-3">
+                  <Card className="hover:bg-slate-50 transition cursor-pointer border-[#F3F4F6] shadow-sm rounded-2xl p-4 mb-4 gap-3">
                     <div className="flex items-center gap-3 mb-3">
                       <Image
                         src={

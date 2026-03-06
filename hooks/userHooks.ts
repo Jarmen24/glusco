@@ -16,8 +16,9 @@ export function useGetUser() {
           data: { user },
           error: authError,
         } = await client.auth.getUser();
-
-        if (authError || !user) {
+        console.log("Auth User:", user);
+        console.log("Auth Error:", authError);
+        if (!user) {
           setLoading(false);
           return;
         }

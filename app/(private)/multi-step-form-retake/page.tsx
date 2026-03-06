@@ -21,6 +21,7 @@ import { useRouter } from "next/navigation";
 import { AuthContext } from "@/components/context/AuthProvider";
 import GeminiResult from "@/components/types/GeminiTypes";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export type FormData = {
   username: string;
@@ -127,7 +128,7 @@ export async function getLatestUserFormData(id: number) {
 
 const MultiFormRetake = () => {
   const auth = useContext(AuthContext);
-  const { userDB, loading } = useGetUser();
+  const { userDB, loading: userLoading } = useGetUser();
   const router = useRouter();
 
   const [data, setData] = useState(INITIAL_DATA);
@@ -185,8 +186,25 @@ const MultiFormRetake = () => {
     loadFormData();
   }, [userDB?.id]);
 
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      // Only run if loading is finished
+      if (!auth?.loading && !userLoading) {
+        console.log("Auth Check:", { user: auth?.user, db: userDB });
+
+        if (!auth?.user || !userDB) {
+          console.warn("User session invalid, redirecting...");
+          await client.auth.signOut();
+          router.push("/onboarding");
+        }
+      }
+    };
+
+    checkUserStatus();
+  }, [auth?.user, auth?.loading, userDB, userLoading, router]);
+
   const isGlobalLoading =
-    usernameLoading || formDataLoading || predictionLoading;
+    usernameLoading && formDataLoading && predictionLoading;
 
   function updateFields(fields: Partial<FormData>) {
     setData((prev) => ({ ...prev, ...fields }));
@@ -204,9 +222,7 @@ const MultiFormRetake = () => {
   if (!auth) {
     return (
       <div className="p-10 text-center">
-        <p>
-          Auth context not found. Make sure AuthProvider wraps this component.
-        </p>
+        <p>Auth context not found.</p>
       </div>
     );
   }
@@ -280,32 +296,141 @@ const MultiFormRetake = () => {
     e.preventDefault();
 
     if (currentStepIndex === 0) {
-      const required = [
-        "age",
-        "gender",
-        "height",
-        "weight",
-        "waist",
-        "hip",
-        "systolic",
-        "diastolic",
-      ];
-      if (required.some((field) => !data[field as keyof FormData])) {
-        return toast.error("Please fill in all required fields.");
+      const allFieldsFilled =
+        data.username.trim() !== "" &&
+        data.age.trim() !== "" &&
+        data.gender !== "" &&
+        data.height.trim() !== "" &&
+        data.weight.trim() !== "" &&
+        data.waist.trim() !== "" &&
+        data.hip.trim() !== "" &&
+        data.systolic.trim() !== "" &&
+        data.diastolic.trim() !== "";
+
+      if (!allFieldsFilled) {
+        toast.error("Please fill in all fields.");
+        return false;
       }
 
-      // Skip username check if the username hasn't changed from their current one
-      if (data.username.toLowerCase() !== userDB?.username?.toLowerCase()) {
-        setCheckUsername(true);
-        const { data: exists } = await client
-          .from("users")
-          .select("id")
-          .eq("username", data.username.toLowerCase())
-          .maybeSingle();
-        setCheckUsername(false);
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      // Numbers: Allows only digits and a single decimal point
 
-        if (exists) return toast.error("Username is already taken.");
+      // --- 3. Validate Username ---
+      if (!usernameRegex.test(data.username)) {
+        return toast.error(
+          "Username can only contain letters, numbers, and underscores.",
+        );
       }
+
+      setCheckUsername(true);
+      const { data: exists } = await client
+        .from("users")
+        .select("id")
+        .eq("username", data.username.toLowerCase())
+        .maybeSingle();
+      setCheckUsername(false);
+
+      if (exists && exists.id !== userDB?.id)
+        return toast.error("Username is already taken.");
+    }
+
+    const numericValidation = {
+      age: { label: "Age", min: 1, max: 120 },
+      height: { label: "Height (cm)", min: 50, max: 250 },
+      weight: { label: "Weight (kg)", min: 20, max: 300 },
+      waist: { label: "Waist (cm)", min: 30, max: 200 },
+      hip: { label: "Hip (cm)", min: 30, max: 200 },
+      systolic: { label: "Systolic", min: 70, max: 250 },
+      diastolic: { label: "Diastolic", min: 40, max: 150 },
+      hba1c: { label: "HbA1c", min: 3, max: 20 },
+      fbs: { label: "FBS", min: 40, max: 600 },
+      cholesterol: { label: "Cholesterol", min: 50, max: 500 },
+      hdl: { label: "HDL", min: 10, max: 150 },
+    };
+    const numericRegex = /^\d*\.?\d+$/;
+    for (const key in numericValidation) {
+      const typedKey = key as keyof typeof numericValidation;
+
+      const field = numericValidation[typedKey];
+      const value = data[typedKey];
+
+      if (!value || value.trim() === "") {
+        toast.error(`${field.label} is required`);
+        return false;
+      }
+
+      const num = Number(value);
+
+      if (isNaN(num)) {
+        toast.error(`${field.label} must be a number`);
+        return false;
+      }
+
+      if (num < field.min || num > field.max) {
+        toast.error(
+          `${field.label} must be between ${field.min} and ${field.max}`,
+        );
+        return false;
+      }
+    }
+    const isDietaryHabitsValid = () => {
+      return (
+        data.fruits !== "" &&
+        data.vegetables !== "" &&
+        data.fried !== "" &&
+        data.sweets !== "" &&
+        data.fastfood !== "" &&
+        data.processed !== "" &&
+        data.softdrink !== "" &&
+        data.weight_concern !== ""
+      );
+    };
+
+    const isPhysicalActivityValid = () => {
+      return (
+        data.exercise_times !== "0" &&
+        data.exercise_duration !== "0" &&
+        data.sitting !== "0" &&
+        data.main_activity !== "0" &&
+        data.mode_of_transpo !== "0"
+      );
+    };
+
+    const isSleepSubstanceValid = () => {
+      return (
+        data.sleep_hours !== "0" &&
+        data.sleep_cigarette !== "0" &&
+        data.sleep_alcohol !== "0"
+      );
+    };
+
+    const isFamilyHistoryValid = () => {
+      return (
+        data.fh_father !== "0" &&
+        data.fh_mother !== "0" &&
+        data.fh_sister !== "0" &&
+        data.fh_brother !== "0" &&
+        data.fh_extended !== "0"
+      );
+    };
+    if (!isDietaryHabitsValid()) {
+      alert("Please answer all required Dietary Habits questions.");
+      return;
+    }
+
+    if (!isPhysicalActivityValid()) {
+      alert("Please answer all required Physical Activity questions.");
+      return;
+    }
+
+    if (!isSleepSubstanceValid()) {
+      alert("Please answer all required Sleep & Substance questions.");
+      return;
+    }
+
+    if (!isFamilyHistoryValid()) {
+      alert("Please answer all required Family History questions.");
+      return;
     }
 
     if (!isLastStep) return next();
@@ -338,6 +463,13 @@ const MultiFormRetake = () => {
       )}
 
       <Card className="w-full max-w-[1000px] p-4 px-6 bg-[#F8F3ED] shadow-none border-0">
+        <Image
+          src={"/glusco-logo.png"}
+          alt={"glusco-logo"}
+          width={150}
+          height={50}
+          className="object-cover mx-auto"
+        />
         <form onSubmit={handleSubmit}>
           <div className="w-full flex flex-col justify-between items-start">
             <p className="font-bold lg:text-lg text-sm bg-blue-950 lg:px-5 py-2 px-2 rounded-2xl text-white shrink-0">

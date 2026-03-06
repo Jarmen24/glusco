@@ -1,4 +1,5 @@
 import React from "react";
+import { useRouter } from "next/navigation";
 import {
   Card,
   CardContent,
@@ -13,9 +14,11 @@ import { toast } from "sonner";
 import client from "@/app/api/client";
 import GoogleLoginButton from "./GoogleAuth";
 import { set } from "zod";
+import { router } from "next/router";
 
 const Login = () => {
   const [loading, setLoading] = React.useState(false);
+  const router = useRouter();
   const handleLogin = async (e) => {
     setLoading(true);
     e.preventDefault();
@@ -35,6 +38,7 @@ const Login = () => {
     }
     if (authData) {
       toast.success("Login successful");
+      router.push("/dashboard");
       return;
     }
     setLoading(false);

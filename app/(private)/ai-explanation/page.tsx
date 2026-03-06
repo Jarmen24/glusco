@@ -22,8 +22,11 @@ import {
   useGetUserWithPrediction,
 } from "@/hooks/profileHooks";
 import { getUserGemini, insertAnalysisToDB } from "@/hooks/userGemini";
+import { useRouter } from "next/navigation";
 
 export default function AIAnalysisPage() {
+  const router = useRouter();
+
   const { userDB, loading: userLoading } = useGetUser();
   const [aiText, setAiText] = useState<GeminiResult | null>(null);
   const [aiLoading, setAiLoading] = useState<boolean>(true);
@@ -52,11 +55,13 @@ export default function AIAnalysisPage() {
           fetchUserFormData(parseInt(userDB.id)),
           fetchUserWithPrediction(parseInt(userDB.id)),
         ]);
+        console.log("Form Data:", formRes);
+        console.log("Prediction Data:", predRes);
 
-        if (formRes.error || !formRes.data)
-          throw new Error("Could not retrieve clinical data.");
-        if (predRes.error || !predRes.data)
-          throw new Error("Could not retrieve prediction results.");
+        if (!predRes || !predRes.data || !formRes || !formRes.data) {
+          router.push("/multi-step-form");
+          return;
+        }
 
         // 3. COMBINE DATA
         const combinedData = { ...formRes.data, ...predRes.data };
@@ -73,6 +78,7 @@ export default function AIAnalysisPage() {
 
         // Single state update at the very end to render the UI once
         setAiText(response);
+        console.log(response);
       } catch (err: any) {
         console.error("Analysis Flow Error:", err);
         setApiError(err.message || "Something went wrong.");
@@ -103,6 +109,8 @@ export default function AIAnalysisPage() {
 
   // --- ERROR STATE ---
   if (apiError) {
+    console.log("API Error:", apiError);
+    console.log(aiText);
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-[#0B1956] px-6">
         <Card className="max-w-md w-full rounded-[2rem] p-8 text-center shadow-2xl">

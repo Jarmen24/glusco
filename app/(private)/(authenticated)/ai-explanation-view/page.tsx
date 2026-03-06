@@ -15,66 +15,94 @@ import {
 import Link from "next/link";
 import GeminiResult from "@/components/types/GeminiTypes";
 import { useGetUser } from "@/hooks/userHooks";
-import { useUserAnalysis } from "@/hooks/profileHooks";
+import {
+  useGetUserFormData,
+  useGetUserWithPrediction,
+  useUserAnalysis,
+} from "@/hooks/profileHooks";
+import { useRouter } from "next/navigation";
+import { useHealthData } from "@/components/context/DataContext";
 
 // 2. TOGGLE THIS TO TEST BOTH STATES
 const isLoading = false;
 
 export default function AIAnalysisPage() {
-  const { userDB, loading } = useGetUser();
+  const router = useRouter();
 
-  const [aiText, setAiText] = React.useState<GeminiResult>();
+  const {
+    formData,
+    predictionData,
+    predictionHistory,
+    userDB,
+    isDataLoading,
+    aiText,
+  } = useHealthData();
+
+  // const [aiText, setAiText] = React.useState<GeminiResult>();
   const [aiLoading, setAiLoading] = React.useState<boolean>(isLoading);
-
+  // Hooks for fetching
+  const { fetchUserWithPrediction } = useGetUserWithPrediction();
+  const { fetchUserFormData } = useGetUserFormData();
   const {
     fetchAnalysis,
     loading: analysisLoading,
     error: analysisError,
   } = useUserAnalysis();
-  const hasRun = React.useRef(false);
-  useEffect(() => {
-    if (hasRun.current) return;
-    const loadData = async () => {
-      if (!userDB?.id) {
-        console.log("User not logged in");
-        return;
-      }
+  // const hasRun = React.useRef(false);
+  // useEffect(() => {
+  //   if (hasRun.current) return;
+  //   const loadData = async () => {
+  //     if (!userDB?.id) {
+  //       console.log("User not logged in");
+  //       return;
+  //     }
 
-      try {
-        setAiLoading(true);
-        // 2. Fetch the prediction (which likely includes the AI analysis)
+  //     try {
+  //       setAiLoading(true);
+  //       // 2. Fetch the prediction (which likely includes the AI analysis)
+  //       const [formRes, predRes] = await Promise.all([
+  //         fetchUserFormData(parseInt(userDB.id)),
+  //         fetchUserWithPrediction(parseInt(userDB.id)),
+  //       ]);
+  //       console.log("Form Data:", formRes);
+  //       console.log("Prediction Data:", predRes);
 
-        const { data, error } = await fetchAnalysis(parseInt(userDB.id));
+  //       if (!predRes || !predRes.data || !formRes || !formRes.data) {
+  //         router.push("/multi-step-form");
+  //         return;
+  //       }
+  //       const { data, error } = await fetchAnalysis(parseInt(userDB.id));
 
-        if (!data || error) {
-          // Assuming your hook/API returns the AI analysis in the data
-          console.log("Error fetching analysis:", error);
-          return;
-        }
+  //       if (!data || error) {
+  //         // Assuming your hook/API returns the AI analysis in the data
+  //         console.log("Error fetching analysis:", error);
+  //         router.push("/prediction");
+  //         return;
+  //       }
 
-        setAiText(data);
-        setAiLoading(false);
-      } catch (err) {
-        console.error("Error fetching analysis:", err);
-      } finally {
-        setAiLoading(false);
-      }
-    };
+  //       setAiText(data);
+  //       setAiLoading(false);
+  //     } catch (err) {
+  //       console.log("Error fetching analysis:", err);
+  //     } finally {
+  //       setAiLoading(false);
+  //     }
+  //   };
 
-    loadData();
-  }, [userDB?.id]);
+  //   loadData();
+  // }, [userDB?.id]);
 
   // Loading State UI
-  if (aiLoading || !aiText) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#0B1956] to-[#2E4B8F] text-white">
-        <Loader2 className="w-12 h-12 animate-spin mb-4" />
-        <p className="text-lg font-medium animate-pulse">
-          Analyzing your health data...
-        </p>
-      </div>
-    );
-  }
+  // if (aiLoading || !aiText) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-b from-[#0B1956] to-[#2E4B8F] text-white">
+  //       <Loader2 className="w-12 h-12 animate-spin mb-4" />
+  //       <p className="text-lg font-medium animate-pulse">
+  //         Analyzing your health data...
+  //       </p>
+  //     </div>
+  //   );
+  // }
 
   // Loaded State UI
   return (
@@ -103,7 +131,7 @@ export default function AIAnalysisPage() {
           Daily Action Plan
         </p>
         <div className="grid gap-3">
-          {aiText.daily_tasks?.slice(0, 5).map((task, index) => (
+          {aiText.daily_tasks?.slice(0, 5).map((task: any, index: number) => (
             <div
               key={index}
               className="flex items-center bg-white/10 border border-white/15 rounded-2xl p-4 backdrop-blur-sm"
@@ -141,7 +169,7 @@ export default function AIAnalysisPage() {
               Key Factors
             </h2>
             <div className="space-y-4">
-              {aiText.top_drivers?.map((driver, index) => (
+              {aiText.top_drivers?.map((driver: any, index: any) => (
                 <div key={index} className="flex gap-2 items-start">
                   <div className="w-1.5 h-1.5 rounded-full bg-[#0B1956] mt-2 shrink-0" />
                   <div>
@@ -162,7 +190,7 @@ export default function AIAnalysisPage() {
               Specific Changes
             </h2>
             <div className="space-y-3">
-              {aiText.specific_changes?.map((change, index) => (
+              {aiText.specific_changes?.map((change: any, index: any) => (
                 <div
                   key={index}
                   className="flex items-center gap-3 text-sm text-gray-700 font-medium"
@@ -175,23 +203,6 @@ export default function AIAnalysisPage() {
           </section>
 
           <hr className="border-gray-100" />
-
-          <section>
-            <h2 className="text-lg font-extrabold text-[#0B1956] mb-3">
-              Advice
-            </h2>
-            <div className="space-y-3">
-              {aiText.advice?.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 text-sm text-gray-700"
-                >
-                  <CheckCircle className="w-4 h-4 text-green-500 shrink-0" />
-                  {item}
-                </div>
-              ))}
-            </div>
-          </section>
         </CardContent>
       </Card>
 

@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useContext, useState, FormEvent, useEffect } from "react";
+import React, {
+  useContext,
+  useState,
+  FormEvent,
+  useEffect,
+  useRef,
+} from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import useMultiStepForm from "@/hooks/useMultiStepForm";
@@ -12,6 +18,8 @@ import SleepForm from "@/components/form/SleepForm";
 import FamilyForm from "@/components/form/FamilyForm";
 import { toast } from "sonner";
 import {
+  useGetUserFormData,
+  useGetUserWithPrediction,
   useInsertPrediction,
   useUpdateFormData,
   useUpdateUsername,
@@ -22,6 +30,7 @@ import { useRouter } from "next/navigation";
 import { AuthContext } from "@/components/context/AuthProvider";
 import GeminiResult from "@/components/types/GeminiTypes";
 import { Loader2 } from "lucide-react";
+import Image from "next/image";
 
 export type FormData = {
   username: string;
@@ -115,8 +124,10 @@ const LoadingOverlay = ({ message }: { message: string }) => (
 
 const MultiForm = () => {
   const router = useRouter();
+  const hasChecked = useRef(false);
 
   // 1. ALL HOOKS MUST BE AT THE TOP
+  const auth = useContext(AuthContext);
   const { userDB, loading: userLoading } = useGetUser();
   const [data, setData] = useState(INITIAL_DATA);
   const [prediction, setPrediction] = useState<string | null>(null);
@@ -129,9 +140,66 @@ const MultiForm = () => {
   const { handleInsertPrediction, loading: predictionLoading } =
     useInsertPrediction();
 
+  // Hooks for fetching
+  const { fetchUserWithPrediction, loading: fetchPredictionLoading } =
+    useGetUserWithPrediction();
+  const { fetchUserFormData, loading: fetchFormDataLoading } =
+    useGetUserFormData();
+
   function updateFields(fields: Partial<FormData>) {
     setData((prev) => ({ ...prev, ...fields }));
   }
+
+  useEffect(() => {
+    if (hasChecked.current) return;
+    if (auth?.loading || userLoading) return;
+    if (!userDB?.id) return;
+
+    hasChecked.current = true;
+    const checkUserStatus = async () => {
+      setGlobalLoading(true);
+      // Only run if loading is finished
+      if (!auth?.loading && !userLoading) {
+        console.log("Auth Check:", { user: auth?.user, db: userDB });
+
+        if (!auth?.user || !userDB || !userDB.id) {
+          console.warn("User session invalid, redirecting...");
+          await client.auth.signOut();
+          router.push("/onboarding");
+        }
+      }
+      if (userDB && userDB.id) {
+        const [formRes, predRes] = await Promise.all([
+          fetchUserFormData(parseInt(userDB.id)),
+          fetchUserWithPrediction(parseInt(userDB.id)),
+        ]);
+        console.log("Form Data:", formRes);
+        console.log("Prediction Data:", predRes);
+
+        if (formRes.data && predRes.data) {
+          router.push("/prediction");
+          return;
+        }
+        setGlobalLoading(false);
+
+        if (formRes.data && !predRes.data) {
+          console.log(
+            "Form data exists but no prediction, fetching prediction..",
+          );
+          const payload = { ...formRes.data, username: userDB.username };
+          const success = await fetchPrediction(payload);
+          setGlobalLoading(false);
+          console.log(success);
+          if (!success) return toast.error("Failed to get prediction.");
+
+          toast.success("Assessment complete!");
+          router.push("/prediction");
+        }
+      }
+    };
+
+    checkUserStatus();
+  }, [auth?.loading, userLoading, userDB?.id]);
 
   const { steps, step, currentStepIndex, isFirstStep, back, next, isLastStep } =
     useMultiStepForm([
@@ -142,36 +210,35 @@ const MultiForm = () => {
       <FamilyForm key="step5" {...data} updateFields={updateFields} />,
     ]);
 
-  // 2. REDIRECT LOGIC IN USEEFFECT
-  useEffect(() => {
-    if (!userLoading && !userDB) {
-      router.replace("/onboarding");
-    }
-  }, [userDB, userLoading, router]);
-
   // 3. LOGIC FUNCTIONS
-  const fetchPrediction = async () => {
+  const fetchPrediction = async (formData: FormData) => {
     try {
-      if (!data.height || !data.weight || !userDB) return 0;
+      if (!formData.height || !formData.weight || !userDB) return 0;
 
       const payload = Object.fromEntries(
-        Object.entries(data).map(([key, value]) => {
+        Object.entries(formData).map(([key, value]) => {
           if (key === "exercise_types" || key === "username")
             return [key, value];
           return [key, parseFloat(value as string) || 0];
         }),
       );
 
+      console.log("Payload for prediction:", formData);
+
       const response = await fetch(
         "https://predictive-model-diabetes.onrender.com/predict",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+          body: JSON.stringify(formData),
         },
       );
 
-      if (!response.ok) return 0;
+      if (!response.ok) {
+        const err = await response.json();
+        console.log("Backend error:", err);
+        return 0;
+      }
       const result = await response.json();
 
       const { error } = await handleInsertPrediction(
@@ -197,22 +264,36 @@ const MultiForm = () => {
 
     // Character Check
     const tooLong = Object.entries(data).find(
-      ([_, v]) => typeof v === "string" && v.length > 50,
+      ([_, v]) => typeof v === "string" && v.length > 16,
     );
     if (tooLong) return toast.error(`Input for "${tooLong[0]}" is too long.`);
 
     // Step 0 Validation (Clinical)
     if (currentStepIndex === 0) {
-      const required = [
-        "username",
-        "age",
-        "height",
-        "weight",
-        "systolic",
-        "diastolic",
-      ];
-      if (required.some((f) => !data[f as keyof FormData])) {
-        return toast.error("Please fill in all required fields.");
+      const allFieldsFilled =
+        data.username.trim() !== "" &&
+        data.age.trim() !== "" &&
+        data.gender !== "" &&
+        data.height.trim() !== "" &&
+        data.weight.trim() !== "" &&
+        data.waist.trim() !== "" &&
+        data.hip.trim() !== "" &&
+        data.systolic.trim() !== "" &&
+        data.diastolic.trim() !== "";
+
+      if (!allFieldsFilled) {
+        toast.error("Please fill in all fields.");
+        return false;
+      }
+
+      const usernameRegex = /^[a-zA-Z0-9_]+$/;
+      // Numbers: Allows only digits and a single decimal point
+
+      // --- 3. Validate Username ---
+      if (!usernameRegex.test(data.username)) {
+        return toast.error(
+          "Username can only contain letters, numbers, and underscores.",
+        );
       }
 
       setCheckUsername(true);
@@ -225,6 +306,111 @@ const MultiForm = () => {
 
       if (exists && exists.id !== userDB?.id)
         return toast.error("Username is already taken.");
+
+      const numericValidation = {
+        age: { label: "Age", min: 1, max: 120 },
+        height: { label: "Height (cm)", min: 50, max: 250 },
+        weight: { label: "Weight (kg)", min: 20, max: 300 },
+        waist: { label: "Waist (cm)", min: 30, max: 200 },
+        hip: { label: "Hip (cm)", min: 30, max: 200 },
+        systolic: { label: "Systolic", min: 70, max: 250 },
+        diastolic: { label: "Diastolic", min: 40, max: 150 },
+        hba1c: { label: "HbA1c", min: 3, max: 20 },
+        fbs: { label: "FBS", min: 40, max: 600 },
+        cholesterol: { label: "Cholesterol", min: 50, max: 500 },
+        hdl: { label: "HDL", min: 10, max: 150 },
+      };
+      const numericRegex = /^\d*\.?\d+$/;
+      for (const key in numericValidation) {
+        const typedKey = key as keyof typeof numericValidation;
+
+        const field = numericValidation[typedKey];
+        const value = data[typedKey];
+
+        if (!value || value.trim() === "") {
+          toast.error(`${field.label} is required`);
+          return false;
+        }
+
+        const num = Number(value);
+
+        if (isNaN(num)) {
+          toast.error(`${field.label} must be a number`);
+          return false;
+        }
+
+        if (num < field.min || num > field.max) {
+          toast.error(
+            `${field.label} must be between ${field.min} and ${field.max}`,
+          );
+          return false;
+        }
+      }
+    }
+
+    if (currentStepIndex === 1) {
+      const isDietaryHabitsValid = () => {
+        return (
+          data.fruits !== "" &&
+          data.vegetables !== "" &&
+          data.fried !== "" &&
+          data.sweets !== "" &&
+          data.fastfood !== "" &&
+          data.processed !== "" &&
+          data.softdrink !== "" &&
+          data.weight_concern !== ""
+        );
+      };
+      if (!isDietaryHabitsValid()) {
+        alert("Please answer all required Dietary Habits questions.");
+        return;
+      }
+    }
+
+    if (currentStepIndex === 2) {
+      const isPhysicalActivityValid = () => {
+        return (
+          data.exercise_times !== "0" &&
+          data.exercise_duration !== "0" &&
+          data.sitting !== "0" &&
+          data.main_activity !== "0" &&
+          data.mode_of_transpo !== "0"
+        );
+      };
+      if (!isPhysicalActivityValid()) {
+        alert("Please answer all required Physical Activity questions.");
+        return;
+      }
+    }
+
+    if (currentStepIndex === 3) {
+      const isSleepSubstanceValid = () => {
+        return (
+          data.sleep_hours !== "0" &&
+          data.sleep_cigarette !== "0" &&
+          data.sleep_alcohol !== "0"
+        );
+      };
+      if (!isSleepSubstanceValid()) {
+        alert("Please answer all required Sleep & Substance questions.");
+        return;
+      }
+    }
+
+    if (currentStepIndex === 4) {
+      const isFamilyHistoryValid = () => {
+        return (
+          data.fh_father !== "0" &&
+          data.fh_mother !== "0" &&
+          data.fh_sister !== "0" &&
+          data.fh_brother !== "0" &&
+          data.fh_extended !== "0"
+        );
+      };
+      if (!isFamilyHistoryValid()) {
+        alert("Please answer all required Family History questions.");
+        return;
+      }
     }
 
     if (!isLastStep) return next();
@@ -252,7 +438,7 @@ const MultiForm = () => {
       return toast.error("Failed to update form data.");
     }
 
-    const success = await fetchPrediction();
+    const success = await fetchPrediction(data);
     setGlobalLoading(false);
 
     if (!success) return toast.error("Failed to get prediction.");
@@ -270,20 +456,36 @@ const MultiForm = () => {
       </div>
     );
   }
-
-  if (!userDB) return null; // Redirect is handled by useEffect above
+  if (!auth) {
+    return (
+      <div className="p-10 text-center">
+        <p>Auth context not found.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center w-full relative">
       {globalLoading && (
         <LoadingOverlay
           message={
-            predictionLoading ? "Analyzing Health Risks" : "Saving Progress"
+            predictionLoading
+              ? "Analyzing Health Risks"
+              : fetchPredictionLoading && fetchFormDataLoading
+                ? "Checking if you had progress.."
+                : "Saving Progress"
           }
         />
       )}
 
       <Card className="w-full max-w-[1000px] p-4 px-6 bg-[#F8F3ED] shadow-none border-0">
+        <Image
+          src={"/glusco-logo.png"}
+          alt={"glusco-logo"}
+          width={150}
+          height={50}
+          className="object-cover mx-auto"
+        />
         <form onSubmit={handleSubmit}>
           <div className="w-full flex flex-col justify-between items-start">
             <p className="font-bold lg:text-lg text-sm bg-blue-950 lg:px-5 py-2 px-2 rounded-2xl text-white shrink-0">

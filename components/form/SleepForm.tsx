@@ -42,19 +42,19 @@ const SleepForm: React.FC<SleepFormProps> = ({
           >
             <div className="flex items-center gap-3">
               <RadioGroupItem value="4" id="sleepHours-4" />
-              <Label htmlFor="4">Less than 5 hours</Label>
+              <Label htmlFor="sleepHours-4">Less than 5 hours</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="3" id="sleepHours-3" />
-              <Label htmlFor="3">5-6 hours</Label>
+              <Label htmlFor="sleepHours-3">5-6 hours</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="2" id="sleepHours-2" />
-              <Label htmlFor="2">7-8 hours</Label>
+              <Label htmlFor="sleepHours-2">7-8 hours</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="1" id="sleepHours-1" />
-              <Label htmlFor="1">More than 8 hours</Label>
+              <Label htmlFor="sleepHours-1">More than 8 hours</Label>
             </div>
           </RadioGroup>
         </div>
@@ -70,19 +70,19 @@ const SleepForm: React.FC<SleepFormProps> = ({
           >
             <div className="flex items-center gap-3">
               <RadioGroupItem value="1" id="cigarette-1" />
-              <Label htmlFor="1">Never</Label>
+              <Label htmlFor="cigarette-1">Never</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="2" id="cigarette-2" />
-              <Label htmlFor="2">Occasionally</Label>
+              <Label htmlFor="cigarette-2">Occasionally</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="3" id="cigarette-3" />
-              <Label htmlFor="4">Regularly</Label>
+              <Label htmlFor="cigarette-3">Regularly</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="4" id="cigarette-4" />
-              <Label htmlFor="3">Former Smoker</Label>
+              <Label htmlFor="cigarette-4">Former Smoker</Label>
             </div>
           </RadioGroup>
         </div>
@@ -98,19 +98,19 @@ const SleepForm: React.FC<SleepFormProps> = ({
           >
             <div className="flex items-center gap-3">
               <RadioGroupItem value="1" id="alcohol-1" />
-              <Label htmlFor="1">Never</Label>
+              <Label htmlFor="alcohol-1">Never</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="2" id="alcohol-2" />
-              <Label htmlFor="2">Occasionally</Label>
+              <Label htmlFor="alcohol-2">Occasionally</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="3" id="alcohol-3" />
-              <Label htmlFor="3">Weekly</Label>
+              <Label htmlFor="alcohol-3">Weekly</Label>
             </div>
             <div className="flex items-center gap-3">
               <RadioGroupItem value="4" id="alcohol-4" />
-              <Label htmlFor="4">Almost Daily</Label>
+              <Label htmlFor="alcohol-4">Almost Daily</Label>
             </div>
           </RadioGroup>
         </div>

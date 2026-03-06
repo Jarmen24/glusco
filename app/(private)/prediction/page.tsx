@@ -1,15 +1,22 @@
 "use client";
 
+import client from "@/app/api/client";
 import { Button } from "@/components/ui/button";
-import { useGetUserWithPrediction } from "@/hooks/profileHooks";
+import {
+  useGetUserFormData,
+  useGetUserWithPrediction,
+} from "@/hooks/profileHooks";
 import { useGetUser } from "@/hooks/userHooks";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import { CircularProgressbar, buildStyles } from "react-circular-progressbar";
 import "react-circular-progressbar/dist/styles.css";
 import { SyncLoader } from "react-spinners";
+import { PredData } from "@/components/types/UserDB";
 
 const Prediction = () => {
+  const router = useRouter();
   const { userDB, loading: userLoading } = useGetUser();
 
   const [prediction, setPrediction] = useState<number | null>(null);
@@ -18,29 +25,42 @@ const Prediction = () => {
 
   const { fetchUserWithPrediction, loading, error } =
     useGetUserWithPrediction();
+  const { fetchUserFormData } = useGetUserFormData();
 
   const handleLoadPrediction = async () => {
-    console.log(userDB);
-    if (!userDB) return console.log("WALA USER");
+    if (!userDB) {
+      await client.auth.signOut();
+      router.push("/onboarding");
+    }
+    if (userDB && userDB.id) {
+      // check if may form data and prediction data
+      const [formRes, predRes]: [any, any] = await Promise.all([
+        fetchUserFormData(parseInt(userDB.id)),
+        fetchUserWithPrediction(parseInt(userDB.id)),
+      ]);
+      console.log("Form Data:", formRes);
+      console.log("Prediction Data:", predRes);
 
-    const { data, error } = await fetchUserWithPrediction(parseInt(userDB.id));
-    console.log(data);
-    if (error) return console.log(error);
+      if (!predRes || !predRes.data || !formRes || !formRes.data) {
+        router.push("/multi-step-form");
+        return;
+      }
 
-    if (data) {
-      const percent = Math.round(data.percent);
-      setPrediction(percent);
-      console.log("Prediction percent:", percent);
-      // Determine risk level and color
-      if (percent < 31) {
-        setRiskLabel("Low Risk");
-        setColor("#4CAF50"); // green
-      } else if (percent < 61) {
-        setRiskLabel("Moderate Risk");
-        setColor("#FF9800"); // orange
-      } else {
-        setRiskLabel("High Risk");
-        setColor("#F44336"); // red
+      if (predRes) {
+        const percent = Math.round(predRes.data.percent);
+        setPrediction(percent);
+        console.log("Prediction percent:", percent);
+        // Determine risk level and color
+        if (percent < 31) {
+          setRiskLabel("Low Risk");
+          setColor("#4CAF50"); // green
+        } else if (percent < 61) {
+          setRiskLabel("Moderate Risk");
+          setColor("#FF9800"); // orange
+        } else {
+          setRiskLabel("High Risk");
+          setColor("#F44336"); // red
+        }
       }
     }
   };

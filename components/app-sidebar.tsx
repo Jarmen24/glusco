@@ -37,6 +37,7 @@ import client from "@/app/api/client";
 import { toast } from "sonner";
 import { useGetUser } from "@/hooks/userHooks";
 import { UserDB } from "./types/UserDB";
+import Image from "next/image";
 
 interface DBUser {
   id: string;
@@ -74,9 +75,17 @@ export function AppSidebar({ user, variant, ...props }: AppSidebarProps) {
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5"
             >
-              <a href="#">
-                <IconInnerShadowTop className="size-5" />
-                <span className="text-base font-semibold">Glusco</span>
+              <a
+                href="#"
+                className="flex items-center gap-2 overflow-visible w-auto mx-auto justify-center mt-3"
+              >
+                <Image
+                  src="/glusco-logo.png"
+                  alt="glusco-logo"
+                  width={150}
+                  height={150}
+                  className={"overflow"}
+                />
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

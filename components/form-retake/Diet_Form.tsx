@@ -49,24 +49,28 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Never</Label>
+                <RadioGroupItem value="5" id="fruits-5" />
+                <Label htmlFor="fruits-5">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="4" id="fruits-4" />
+                <Label htmlFor="fruits-4">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="fruits-3" />
+                <Label htmlFor="fruits-3">
+                  Occasionally (3-5 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="2" id="fruits-2" />
+                <Label htmlFor="fruits-2">Frequently (1-2 servings/day)</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="1" id="fruits-1" />
+                <Label htmlFor="fruits-1">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -82,24 +86,26 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Never</Label>
+                <RadioGroupItem value="5" id="veg-5" />
+                <Label htmlFor="veg-5">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="4" id="veg-4" />
+                <Label htmlFor="veg-4">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="veg-3" />
+                <Label htmlFor="veg-3">Occasionally (3-5 servings/week)</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="2" id="veg-2" />
+                <Label htmlFor="veg-2">Frequently (1-2 servings/day)</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="1" id="veg-1" />
+                <Label htmlFor="veg-1">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -113,24 +119,28 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Never</Label>
+                <RadioGroupItem value="1" id="sweets-1" />
+                <Label htmlFor="sweets-1">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="2" id="sweets-2" />
+                <Label htmlFor="sweets-2">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="sweets-3" />
+                <Label htmlFor="sweets-3">
+                  Occasionally (3-5 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="4" id="sweets-4" />
+                <Label htmlFor="sweets-4">Frequently (1-2 servings/day)</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="5" id="sweets-5" />
+                <Label htmlFor="sweets-5">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -144,24 +154,28 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Never</Label>
+                <RadioGroupItem value="1" id="fried-1" />
+                <Label htmlFor="fried-1">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="2" id="fried-2" />
+                <Label htmlFor="fried-2">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="fried-3" />
+                <Label htmlFor="fried-3">
+                  Occasionally (3-5 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="4" id="fried-4" />
+                <Label htmlFor="fried-4">Frequently (1-2 servings/day)</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="5" id="fried-5" />
+                <Label htmlFor="fried-5">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -179,24 +193,30 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Never</Label>
+                <RadioGroupItem value="1" id="fastfood-1" />
+                <Label htmlFor="fastfood-1">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="2" id="fastfood-2" />
+                <Label htmlFor="fastfood-2">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="fastfood-3" />
+                <Label htmlFor="fastfood-3">
+                  Occasionally (3-5 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="4" id="fastfood-4" />
+                <Label htmlFor="fastfood-4">
+                  Frequently (1-2 servings/day)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="5" id="fastfood-5" />
+                <Label htmlFor="fastfood-5">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -214,24 +234,30 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Never</Label>
+                <RadioGroupItem value="1" id="processed-1" />
+                <Label htmlFor="processed-1">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="2" id="processed-2" />
+                <Label htmlFor="processed-2">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="processed-3" />
+                <Label htmlFor="processed-3">
+                  Occasionally (3-5 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="4" id="processed-4" />
+                <Label htmlFor="processed-4">
+                  Frequently (1-2 servings/day)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="5" id="processed-5" />
+                <Label htmlFor="processed-5">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -248,24 +274,30 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Never</Label>
+                <RadioGroupItem value="1" id="softdrink-1" />
+                <Label htmlFor="softdrink-1">Never</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Rarely (less than 3 servings/week)</Label>
+                <RadioGroupItem value="2" id="softdrink-2" />
+                <Label htmlFor="softdrink-2">
+                  Rarely (less than 3 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">Occasionally (3-5 servings/week)</Label>
+                <RadioGroupItem value="3" id="softdrink-3" />
+                <Label htmlFor="softdrink-3">
+                  Occasionally (3-5 servings/week)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="4" id="4" />
-                <Label htmlFor="4">Frequently (1-2 servings/day)</Label>
+                <RadioGroupItem value="4" id="softdrink-4" />
+                <Label htmlFor="softdrink-4">
+                  Frequently (1-2 servings/day)
+                </Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="5" id="5" />
-                <Label htmlFor="5">Daily (3+servings/day)</Label>
+                <RadioGroupItem value="5" id="softdrink-5" />
+                <Label htmlFor="softdrink-5">Daily (3+servings/day)</Label>
               </div>
             </RadioGroup>
           </div>
@@ -282,16 +314,16 @@ const DietForm: React.FC<DietFormProps> = ({
               className="flex flex-col gap-3 ml-3 mt-3"
             >
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="1" id="1" />
-                <Label htmlFor="1">Yes, Successfully</Label>
+                <RadioGroupItem value="1" id="weight-1" />
+                <Label htmlFor="weight-1">Yes, Successfully</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="2" id="2" />
-                <Label htmlFor="2">Yes, but no significant change</Label>
+                <RadioGroupItem value="2" id="weight-2" />
+                <Label htmlFor="weight-2">Yes, but no significant change</Label>
               </div>
               <div className="flex items-center gap-3">
-                <RadioGroupItem value="3" id="3" />
-                <Label htmlFor="3">No attempt</Label>
+                <RadioGroupItem value="3" id="weight-3" />
+                <Label htmlFor="weight-3">No attempt</Label>
               </div>
             </RadioGroup>
           </div>

@@ -5,6 +5,7 @@ import vigorousExercises from "../components/workouts/vigorous_workouts.json";
 import featureWeights from "../components/context/FeatureWeighs";
 import { AIReport } from "../components/types/GeminiTypes";
 import client from "@/app/api/client";
+import { toast } from "sonner";
 
 const surveySchema = {
   dietaryFrequency: {
@@ -156,16 +157,15 @@ export const getUserGemini = async (modelPrediction: object) => {
 
       INSTRUCTION:
       Identify the top 2 factors driving the current risk score.
-      Provide a clear 'Next Step'. Identify which lifestyle factors (from the weights/schema) contributed most to the risk change. 
+      Provide a clear 'Next Step'. Identify which lifestyle factors (from the weights/schema) contributed most to the risk change.
       Generate 5 highly specific, actionable "Daily Tasks" for the user to help reduce their risk next week. Make it clear, concise and short. Use simple language and talk to the patient directly.
 
       OUTPUT FORMAT:
-      Return response ONLY as JSON: 
+      Return response ONLY as JSON:
       {
         "summary": "overall text",
         "top_drivers": [{"feature": "name", "impact": "description"}],
         "specific_changes": ["change 1", "change 2"],
-        "advice": ["bullet point 1", "bullet point 2"],
         "daily_tasks": [
       {
         "id": "unique_string",
@@ -173,12 +173,6 @@ export const getUserGemini = async (modelPrediction: object) => {
         "icon": "water",
         "reasoning": "Because user reported low hydration while HbA1c is high."
       },
-      {
-        "id": "unique_string",
-        "label": "30 min brisk walk",
-        "icon": "walk",
-        "reasoning": "To counteract the rise in FBS levels."
-      }
     ],
         "disclaimer": "legal text"
       }
@@ -200,7 +194,7 @@ export const getUserGemini = async (modelPrediction: object) => {
 
     return JSON.parse(text);
   } catch (error) {
-    console.error("AI Analysis Error:", error);
+    toast.error("AI Analysis Error:");
     // Return a fallback object so your UI doesn't crash
     return {
       summary: "Unable to generate AI analysis at this time.",
@@ -212,6 +206,68 @@ export const getUserGemini = async (modelPrediction: object) => {
     };
   }
 };
+// export const getUserGemini = async (modelPrediction: object) => {
+//   const genAI = new GoogleGenerativeAI(process.env.NEXT_PUBLIC_GEMINI_API_KEY!);
+
+//   // Create a simplified string of approved exercises to save tokens
+//   const approvedList = `
+//     LIGHT: ${lightExercises.Light_Exercises.map((e) => e.title).join(", ")}
+//     MODERATE: ${moderateExercises.Moderate_Exercises.map((e) => e.name).join(", ")}
+//     VIGOROUS: ${vigorousExercises.Vigorous_Exercises.map((e) => e.name).join(", ")}
+//   `;
+
+//   const model = genAI.getGenerativeModel({
+//     model: "gemini-3-flash-preview", //
+//     systemInstruction: `You are a Medical Assistant.
+//     APPROVED EXERCISES: ${approvedList}.
+//     Only suggest exercises from this list. Output ONLY JSON.`,
+//   });
+
+//   try {
+//     // We only send the raw values, not the whole weights/schema objects
+//     const prompt = `Patient Data: ${JSON.stringify(modelPrediction)}.
+//     Pick 5 tasks using the APPROVED EXERCISES.
+//     Return response ONLY as JSON:
+//       {
+//         "summary": "overall text",
+//         "top_drivers": [{"feature": "name", "impact": "description"}],
+//         "specific_changes": ["change 1", "change 2"],
+//         "advice": ["bullet point 1", "bullet point 2"],
+//         "daily_tasks": [
+//       {
+//         "id": "unique_string",
+//         "label": "Drink 8 glasses of water",
+//         "icon": "water",
+//         "reasoning": "Because user reported low hydration while HbA1c is high."
+//       },
+//       {
+//         "id": "unique_string",
+//         "label": "30 min brisk walk",
+//         "icon": "walk",
+//         "reasoning": "To counteract the rise in FBS levels."
+//       }
+//     ],
+//         "disclaimer": "legal text"
+//       }
+//     `;
+
+//     const result = await model.generateContent({
+//       contents: [{ role: "user", parts: [{ text: prompt }] }],
+//       generationConfig: {
+//         responseMimeType: "application/json",
+//         temperature: 0.1, // Keeps the model focused and fast
+//         maxOutputTokens: 800, // Small limit = faster finish
+//       },
+//     });
+
+//     const response = await result.response;
+//     console.log("Raw Response:", response);
+//     return JSON.parse(response.text());
+//   } catch (error) {
+//     console.log("AI Analysis Error:", error);
+//     return;
+//   }
+// };
 
 export const getUserGeminiRetake = async ({
   modelPredictionLastWeek,
@@ -264,7 +320,6 @@ export const getUserGeminiRetake = async ({
         "risk_delta": "Value of increase/decrease"
         "top_drivers": [{"feature": "name", "impact": "description"}],
         "specific_changes": ["change 1", "change 2"],
-        "advice": ["bullet point 1", "bullet point 2"],
         "daily_tasks": [
       {
         "id": "unique_string",
@@ -272,12 +327,6 @@ export const getUserGeminiRetake = async ({
         "icon": "water",
         "reasoning": "Because user reported low hydration while HbA1c is high."
       },
-      {
-        "id": "unique_string",
-        "label": "30 min brisk walk",
-        "icon": "walk",
-        "reasoning": "To counteract the rise in FBS levels."
-      }
     ],
         "disclaimer": "legal text"
       }
@@ -302,7 +351,7 @@ export const getUserGeminiRetake = async ({
 
     return JSON.parse(cleanedText);
   } catch (error) {
-    console.error("AI Analysis Error:", error);
+    toast.error("AI Analysis Error:");
     // Return a fallback object so your UI doesn't crash
     return {
       summary: "Unable to generate AI analysis at this time.",
@@ -335,13 +384,13 @@ export const insertAnalysisToDB = async (
       .select();
 
     if (!data || error) {
-      console.error("Error inserting AI analysis:", error);
+      toast.error("Failed to insert AI analysis");
       return null;
     }
 
     return data;
   } catch (error) {
-    console.error("Error inserting AI analysis:", error);
+    toast.error("Error inserting AI analysis:");
     return null;
   }
 };
@@ -365,7 +414,7 @@ export const getCurrentUserAIReport = async () => {
     .maybeSingle(); // Returns the object directly, or null if nothing found
 
   if (error) {
-    console.error("Error fetching latest AI report:", error);
+    toast.error("Error fetching latest AI report:");
     return null;
   }
 

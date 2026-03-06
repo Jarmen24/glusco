@@ -99,7 +99,7 @@ export function LightExercises() {
           intensity={ex.for}
           duration={ex.duration}
           count={ex.total_exercises}
-          href={`/workouts/${index}`}
+          href={`/betteryou/light/${index}`}
           themeColor="#EAB308" // Yellow-500
           bgColor="#FEFCE8" // Yellow-50
           icon={IconActivity}
@@ -119,7 +119,7 @@ export function ModerateExercises() {
           intensity={ex.intensity}
           duration={ex.duration}
           label={ex.label}
-          href={`/workouts/moderate/${ex.id}`}
+          href={`/betteryou/moderate/${ex.id}`}
           themeColor="#F97316" // Orange-500
           bgColor="#FFF7ED" // Orange-50
           icon={IconBolt}
@@ -139,7 +139,7 @@ export function VigorousExercises() {
           intensity={ex.intensity}
           duration={ex.duration}
           label={ex.label}
-          href={`/workouts/vigorous/${ex.id}`}
+          href={`/betteryou/vigorous/${ex.id}`}
           themeColor="#EF4444" // Red-500
           bgColor="#FEF2F2" // Red-50
           icon={IconFlame}

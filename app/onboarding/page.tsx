@@ -20,24 +20,23 @@ export default function Home() {
       setPredLoading(true);
 
       // 1. Logic for Authenticated Users
-      if (!loading && user) {
-        const { data: pred } = await getAllUserPredictionUsingUUID(user.id);
-
-        if (!pred || pred.length === 0) {
-          router.replace("/multi-step-form");
+      if (!loading) {
+        if (user) {
+          const { data: pred } = await getAllUserPredictionUsingUUID(user.id);
+          console.log(pred);
+          if (pred && pred.length > 0) {
+            router.replace("/dashboard");
+          } else {
+            router.replace("/multi-step-form");
+          }
+          setPredLoading(false);
+          return;
         } else {
-          router.replace("/dashboard");
+          await client.auth.signOut(); // Clear the session
+          router.replace("/onboarding");
+          setPredLoading(false);
+          return;
         }
-        setPredLoading(false);
-        return;
-      }
-
-      // 2. Logic for Unauthenticated Users (Logout)
-      if (!loading && !user) {
-        await client.auth.signOut(); // Clear the session
-        router.replace("/onboarding");
-        setPredLoading(false);
-        return;
       }
     };
 
