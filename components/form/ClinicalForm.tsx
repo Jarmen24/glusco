@@ -219,7 +219,7 @@ const ClinicalForm = ({
                         name="systolic"
                         type="text"
                         required
-                        placeholder="eg. 120/80"
+                        placeholder="eg. 120"
                         className="lg:text-base text-sm bg-gray-50 border-0 outline-none"
                         value={systolic}
                         onChange={(e) =>
@@ -239,7 +239,7 @@ const ClinicalForm = ({
                         name="diastolic"
                         type="text"
                         required
-                        placeholder="eg. 120/80"
+                        placeholder="eg. 80"
                         className="lg:text-base text-sm bg-gray-50 border-0 outline-none"
                         value={diastolic}
                         onChange={(e) =>
