@@ -137,6 +137,7 @@ const MultiFormRetake = () => {
   const [submitted, setSubmitted] = useState(false);
   const [checkUsername, setCheckUsername] = useState(false);
   const [aiText, setAiText] = useState<GeminiResult | null>(null);
+  const isSubmitting = React.useRef(false);
 
   const { handleUpdateUsername, loading: usernameLoading } =
     useUpdateUsername();
@@ -294,160 +295,147 @@ const MultiFormRetake = () => {
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
+    if (isSubmitting.current) return; // block double click
+    isSubmitting.current = true;
+    try {
+      if (currentStepIndex === 0) {
+        const allFieldsFilled =
+          data.age.trim() !== "" &&
+          data.gender !== "" &&
+          data.height.trim() !== "" &&
+          data.weight.trim() !== "" &&
+          data.waist.trim() !== "" &&
+          data.hip.trim() !== "" &&
+          data.systolic.trim() !== "" &&
+          data.diastolic.trim() !== "";
 
-    if (currentStepIndex === 0) {
-      const allFieldsFilled =
-        data.username.trim() !== "" &&
-        data.age.trim() !== "" &&
-        data.gender !== "" &&
-        data.height.trim() !== "" &&
-        data.weight.trim() !== "" &&
-        data.waist.trim() !== "" &&
-        data.hip.trim() !== "" &&
-        data.systolic.trim() !== "" &&
-        data.diastolic.trim() !== "";
+        if (!allFieldsFilled) {
+          toast.error("Please fill in all fields.");
+          return false;
+        }
+      }
+      const numericValidation = {
+        age: { label: "Age", min: 1, max: 120 },
+        height: { label: "Height (cm)", min: 50, max: 250 },
+        weight: { label: "Weight (kg)", min: 20, max: 300 },
+        waist: { label: "Waist (cm)", min: 30, max: 200 },
+        hip: { label: "Hip (cm)", min: 30, max: 200 },
+        systolic: { label: "Systolic", min: 70, max: 250 },
+        diastolic: { label: "Diastolic", min: 40, max: 150 },
+        hba1c: { label: "HbA1c", min: 3, max: 20 },
+        fbs: { label: "FBS", min: 40, max: 600 },
+        cholesterol: { label: "Cholesterol", min: 50, max: 500 },
+        hdl: { label: "HDL", min: 10, max: 150 },
+      };
+      const numericRegex = /^\d*\.?\d+$/;
+      for (const key in numericValidation) {
+        const typedKey = key as keyof typeof numericValidation;
 
-      if (!allFieldsFilled) {
-        toast.error("Please fill in all fields.");
-        return false;
+        const field = numericValidation[typedKey];
+        const value = data[typedKey];
+
+        if (!value || value.trim() === "") {
+          toast.error(`${field.label} is required`);
+          return false;
+        }
+
+        const num = Number(value);
+
+        if (isNaN(num)) {
+          toast.error(`${field.label} must be a number`);
+          return false;
+        }
+
+        if (num < field.min || num > field.max) {
+          toast.error(
+            `${field.label} must be between ${field.min} and ${field.max}`,
+          );
+          return false;
+        }
+      }
+      if (currentStepIndex === 1) {
+        const isDietaryHabitsValid = () => {
+          return (
+            data.fruits !== "" &&
+            data.vegetables !== "" &&
+            data.fried !== "" &&
+            data.sweets !== "" &&
+            data.fastfood !== "" &&
+            data.processed !== "" &&
+            data.softdrink !== "" &&
+            data.weight_concern !== ""
+          );
+        };
+        if (!isDietaryHabitsValid()) {
+          alert("Please answer all required Dietary Habits questions.");
+          return;
+        }
       }
 
-      const usernameRegex = /^[a-zA-Z0-9_]+$/;
-      // Numbers: Allows only digits and a single decimal point
-
-      // --- 3. Validate Username ---
-      if (!usernameRegex.test(data.username)) {
-        return toast.error(
-          "Username can only contain letters, numbers, and underscores.",
-        );
+      if (currentStepIndex === 2) {
+        const isPhysicalActivityValid = () => {
+          return (
+            data.exercise_times !== "0" &&
+            data.exercise_duration !== "0" &&
+            data.sitting !== "0" &&
+            data.main_activity !== "0" &&
+            data.mode_of_transpo !== "0"
+          );
+        };
+        if (!isPhysicalActivityValid()) {
+          alert("Please answer all required Physical Activity questions.");
+          return;
+        }
       }
 
-      setCheckUsername(true);
-      const { data: exists } = await client
-        .from("users")
-        .select("id")
-        .eq("username", data.username.toLowerCase())
-        .maybeSingle();
-      setCheckUsername(false);
-
-      if (exists && exists.id !== userDB?.id)
-        return toast.error("Username is already taken.");
-    }
-
-    const numericValidation = {
-      age: { label: "Age", min: 1, max: 120 },
-      height: { label: "Height (cm)", min: 50, max: 250 },
-      weight: { label: "Weight (kg)", min: 20, max: 300 },
-      waist: { label: "Waist (cm)", min: 30, max: 200 },
-      hip: { label: "Hip (cm)", min: 30, max: 200 },
-      systolic: { label: "Systolic", min: 70, max: 250 },
-      diastolic: { label: "Diastolic", min: 40, max: 150 },
-      hba1c: { label: "HbA1c", min: 3, max: 20 },
-      fbs: { label: "FBS", min: 40, max: 600 },
-      cholesterol: { label: "Cholesterol", min: 50, max: 500 },
-      hdl: { label: "HDL", min: 10, max: 150 },
-    };
-    const numericRegex = /^\d*\.?\d+$/;
-    for (const key in numericValidation) {
-      const typedKey = key as keyof typeof numericValidation;
-
-      const field = numericValidation[typedKey];
-      const value = data[typedKey];
-
-      if (!value || value.trim() === "") {
-        toast.error(`${field.label} is required`);
-        return false;
+      if (currentStepIndex === 3) {
+        const isSleepSubstanceValid = () => {
+          return (
+            data.sleep_hours !== "0" &&
+            data.sleep_cigarette !== "0" &&
+            data.sleep_alcohol !== "0"
+          );
+        };
+        if (!isSleepSubstanceValid()) {
+          alert("Please answer all required Sleep & Substance questions.");
+          return;
+        }
       }
 
-      const num = Number(value);
-
-      if (isNaN(num)) {
-        toast.error(`${field.label} must be a number`);
-        return false;
+      if (currentStepIndex === 4) {
+        const isFamilyHistoryValid = () => {
+          return (
+            data.fh_father !== "0" &&
+            data.fh_mother !== "0" &&
+            data.fh_sister !== "0" &&
+            data.fh_brother !== "0" &&
+            data.fh_extended !== "0"
+          );
+        };
+        if (!isFamilyHistoryValid()) {
+          alert("Please answer all required Family History questions.");
+          return;
+        }
       }
 
-      if (num < field.min || num > field.max) {
-        toast.error(
-          `${field.label} must be between ${field.min} and ${field.max}`,
-        );
-        return false;
-      }
-    }
-    const isDietaryHabitsValid = () => {
-      return (
-        data.fruits !== "" &&
-        data.vegetables !== "" &&
-        data.fried !== "" &&
-        data.sweets !== "" &&
-        data.fastfood !== "" &&
-        data.processed !== "" &&
-        data.softdrink !== "" &&
-        data.weight_concern !== ""
+      if (!isLastStep) return next();
+      if (!userDB) return toast.error("User profile not found.");
+
+      const { error: formErr } = await handleUpdateUserForm(
+        data,
+        parseInt(userDB.id),
       );
-    };
+      if (formErr) return toast.error("Failed to update form data.");
 
-    const isPhysicalActivityValid = () => {
-      return (
-        data.exercise_times !== "0" &&
-        data.exercise_duration !== "0" &&
-        data.sitting !== "0" &&
-        data.main_activity !== "0" &&
-        data.mode_of_transpo !== "0"
-      );
-    };
+      const success = await fetchPrediction();
+      if (!success) return toast.error("Failed to get prediction.");
 
-    const isSleepSubstanceValid = () => {
-      return (
-        data.sleep_hours !== "0" &&
-        data.sleep_cigarette !== "0" &&
-        data.sleep_alcohol !== "0"
-      );
-    };
-
-    const isFamilyHistoryValid = () => {
-      return (
-        data.fh_father !== "0" &&
-        data.fh_mother !== "0" &&
-        data.fh_sister !== "0" &&
-        data.fh_brother !== "0" &&
-        data.fh_extended !== "0"
-      );
-    };
-    if (!isDietaryHabitsValid()) {
-      alert("Please answer all required Dietary Habits questions.");
-      return;
+      setSubmitted(true);
+      toast.success("Assessment updated successfully!");
+      router.push("/prediction");
+    } finally {
+      isSubmitting.current = false;
     }
-
-    if (!isPhysicalActivityValid()) {
-      alert("Please answer all required Physical Activity questions.");
-      return;
-    }
-
-    if (!isSleepSubstanceValid()) {
-      alert("Please answer all required Sleep & Substance questions.");
-      return;
-    }
-
-    if (!isFamilyHistoryValid()) {
-      alert("Please answer all required Family History questions.");
-      return;
-    }
-
-    if (!isLastStep) return next();
-    if (!userDB) return toast.error("User profile not found.");
-
-    const { error: formErr } = await handleUpdateUserForm(
-      data,
-      parseInt(userDB.id),
-    );
-    if (formErr) return toast.error("Failed to update form data.");
-
-    const success = await fetchPrediction();
-    if (!success) return toast.error("Failed to get prediction.");
-
-    setSubmitted(true);
-    toast.success("Assessment updated successfully!");
-    router.push("/prediction");
   }
 
   return (
@@ -494,7 +482,9 @@ const MultiFormRetake = () => {
             <Button
               className="lg:text-lg text-sm bg-blue-950 cursor-pointer"
               type="submit"
-              disabled={checkUsername || isGlobalLoading}
+              disabled={
+                checkUsername || isGlobalLoading || isSubmitting.current
+              }
             >
               {checkUsername ? "Validating..." : isLastStep ? "Submit" : "Next"}
             </Button>
