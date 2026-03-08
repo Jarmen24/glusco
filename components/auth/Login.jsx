@@ -44,6 +44,28 @@ const Login = () => {
     setLoading(false);
   };
 
+  const handleForgotPassword = async () => {
+    const email = document.getElementById("email").value;
+
+    if (!email) {
+      toast.error("Please enter your email first");
+      return;
+    }
+
+    const { error } = await client.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    toast.success(
+      "If your email is in our system, it will be sent a password reset link",
+    );
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -71,7 +93,17 @@ const Login = () => {
                 name="password"
                 placeholder=""
               />
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => handleForgotPassword()}
+                  className="text-sm text-blue-600 hover:underline cursor-pointer"
+                >
+                  Forgot Password?
+                </button>
+              </div>
             </div>
+
             <Button
               type="submit"
               className="w-full cursor-pointer flex items-center justify-center gap-2"
