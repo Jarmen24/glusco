@@ -66,7 +66,7 @@ const Profile = () => {
 
     const data = await handleUpdatePassword(new_password);
   };
-  const [imageUrl, setImageUrl] = React.useState<string>("");
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!editing) return;
@@ -79,7 +79,7 @@ const Profile = () => {
     const name = formData.get("name") as string;
     const username = formData.get("username") as string;
     const email = formData.get("email") as string;
-
+    let profilePicture = userDB?.profile_picture || "";
     if (file) {
       const uniqueName = `${Date.now()}-${file.name}`;
       const renamedFile = new File([file], uniqueName, { type: file.type });
@@ -90,14 +90,15 @@ const Profile = () => {
         toast.error("Error uploading image");
         return;
       }
-      setImageUrl(url);
+      console.log(url);
+      profilePicture = url;
     }
 
     const data = await handleUpdateProfile({
       name,
       username,
       email,
-      profile_picture: imageUrl,
+      profile_picture: profilePicture,
     });
 
     if (!updateLoading) {
