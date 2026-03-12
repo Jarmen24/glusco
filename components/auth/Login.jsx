@@ -34,11 +34,13 @@ const Login = () => {
 
     if (authError) {
       toast.error(authError.message);
+      setLoading(false);
       return;
     }
     if (authData) {
       toast.success("Login successful");
       router.push("/dashboard");
+      setLoading(false);
       return;
     }
     setLoading(false);
@@ -49,6 +51,7 @@ const Login = () => {
 
     if (!email) {
       toast.error("Please enter your email first");
+      setLoading(false);
       return;
     }
 
@@ -58,6 +61,7 @@ const Login = () => {
 
     if (error) {
       toast.error(error.message);
+      setLoading(false);
       return;
     }
 
